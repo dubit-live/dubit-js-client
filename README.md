@@ -2,7 +2,7 @@
 
 **dubit-js** is a JavaScript/TypeScript library for integrating real-time audio translation into your WebRTC applications. Built on top of [Daily](https://www.daily.co), this library simplifies creating meeting rooms, adding translator bots, and managing translation tracks and captions.
 
-> **Note:** This package has a peer dependency on [`@daily-co/daily-js`](https://www.npmjs.com/package/@daily-co/daily-js) (version `>=0.70.0`).
+> **Note:** This package has a peer dependency on [`@daily-co/daily-js`](https://www.npmjs.com/package/@daily-co/daily-js) (version `>=0.83.1`).
 
 ## Features
 
