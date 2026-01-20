@@ -5,7 +5,7 @@ Users should be able to `import dubit from '@taic/dubit'`
 ## From user perspective
 
 - Create dubit instance
-  Instantiate and auth
+Instantiate and auth
 
 ```js
 // Architect note: Create a room using the api call and return appropriate info
@@ -54,5 +54,5 @@ translatorA.onCaptions((caption: CaptionEvent) => {
 
 ```js
 dubit.getSupportedLanguages() // returns array of supported languages
-dubit.getCompleteTranscript({ instanceId }) // leave the impl empty, it will call an api endpoint
+dubit.getCompleteTranscript({instanceId}) // leave the impl empty, it will call an api endpoint
 ```

@@ -1,30 +1,30 @@
-import typescript from '@rollup/plugin-typescript'
-import { babel } from '@rollup/plugin-babel'
-import { nodeResolve } from '@rollup/plugin-node-resolve'
-import commonjs from '@rollup/plugin-commonjs'
+import typescript from "@rollup/plugin-typescript";
+import { babel } from "@rollup/plugin-babel";
+import { nodeResolve } from "@rollup/plugin-node-resolve";
+import commonjs from "@rollup/plugin-commonjs";
 
 export default [
   {
-    input: 'src/dubit.ts',
-    external: ['@daily-co/daily-js'], // treat daily-js as external
+    input: "src/dubit.ts",
+    external: ["@daily-co/daily-js"], // treat daily-js as external
     output: [
       {
-        file: 'dist/dubit.cjs.js',
-        format: 'cjs',
+        file: "dist/dubit.cjs.js",
+        format: "cjs",
         sourcemap: false,
       },
       {
-        file: 'dist/dubit.esm.js',
-        format: 'esm',
+        file: "dist/dubit.esm.js",
+        format: "esm",
         sourcemap: false,
       },
       {
-        file: 'dist/dubit.umd.js',
-        format: 'umd',
-        name: 'Dubit',
+        file: "dist/dubit.umd.js",
+        format: "umd",
+        name: "Dubit",
         sourcemap: false,
         globals: {
-          '@daily-co/daily-js': 'Daily',
+          "@daily-co/daily-js": "Daily",
         },
       },
     ],
@@ -35,17 +35,17 @@ export default [
       commonjs(),
       // Transpile TypeScript
       typescript({
-        tsconfig: './tsconfig.json',
+        tsconfig: "./tsconfig.json",
         compilerOptions: {
-          module: 'ESNext',
+          module: "ESNext",
         },
       }),
       // Transpile to ES5 if necessary
       babel({
-        babelHelpers: 'bundled',
-        extensions: ['.js', '.ts'],
-        exclude: 'node_modules/**',
+        babelHelpers: "bundled",
+        extensions: [".js", ".ts"],
+        exclude: "node_modules/**",
       }),
     ],
   },
-]
+];

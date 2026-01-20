@@ -18,6 +18,20 @@ PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
 /* global Reflect, Promise, SuppressedError, Symbol, Iterator */
 
+var extendStatics = function(d, b) {
+    extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+    return extendStatics(d, b);
+};
+
+function __extends(d, b) {
+    if (typeof b !== "function" && b !== null)
+        throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+    extendStatics(d, b);
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+}
 
 var __assign = function() {
     __assign = Object.assign || function __assign(t) {
@@ -73,20 +87,375 @@ typeof SuppressedError === "function" ? SuppressedError : function (error, suppr
     return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
 };
 
+function getDefaultExportFromCjs (x) {
+	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
+}
+
+var eventemitter3 = {exports: {}};
+
+var hasRequiredEventemitter3;
+
+function requireEventemitter3 () {
+	if (hasRequiredEventemitter3) return eventemitter3.exports;
+	hasRequiredEventemitter3 = 1;
+	(function (module) {
+
+		var has = Object.prototype.hasOwnProperty
+		  , prefix = '~';
+
+		/**
+		 * Constructor to create a storage for our `EE` objects.
+		 * An `Events` instance is a plain object whose properties are event names.
+		 *
+		 * @constructor
+		 * @private
+		 */
+		function Events() {}
+
+		//
+		// We try to not inherit from `Object.prototype`. In some engines creating an
+		// instance in this way is faster than calling `Object.create(null)` directly.
+		// If `Object.create(null)` is not supported we prefix the event names with a
+		// character to make sure that the built-in object properties are not
+		// overridden or used as an attack vector.
+		//
+		if (Object.create) {
+		  Events.prototype = Object.create(null);
+
+		  //
+		  // This hack is needed because the `__proto__` property is still inherited in
+		  // some old browsers like Android 4, iPhone 5.1, Opera 11 and Safari 5.
+		  //
+		  if (!new Events().__proto__) prefix = false;
+		}
+
+		/**
+		 * Representation of a single event listener.
+		 *
+		 * @param {Function} fn The listener function.
+		 * @param {*} context The context to invoke the listener with.
+		 * @param {Boolean} [once=false] Specify if the listener is a one-time listener.
+		 * @constructor
+		 * @private
+		 */
+		function EE(fn, context, once) {
+		  this.fn = fn;
+		  this.context = context;
+		  this.once = once || false;
+		}
+
+		/**
+		 * Add a listener for a given event.
+		 *
+		 * @param {EventEmitter} emitter Reference to the `EventEmitter` instance.
+		 * @param {(String|Symbol)} event The event name.
+		 * @param {Function} fn The listener function.
+		 * @param {*} context The context to invoke the listener with.
+		 * @param {Boolean} once Specify if the listener is a one-time listener.
+		 * @returns {EventEmitter}
+		 * @private
+		 */
+		function addListener(emitter, event, fn, context, once) {
+		  if (typeof fn !== 'function') {
+		    throw new TypeError('The listener must be a function');
+		  }
+
+		  var listener = new EE(fn, context || emitter, once)
+		    , evt = prefix ? prefix + event : event;
+
+		  if (!emitter._events[evt]) emitter._events[evt] = listener, emitter._eventsCount++;
+		  else if (!emitter._events[evt].fn) emitter._events[evt].push(listener);
+		  else emitter._events[evt] = [emitter._events[evt], listener];
+
+		  return emitter;
+		}
+
+		/**
+		 * Clear event by name.
+		 *
+		 * @param {EventEmitter} emitter Reference to the `EventEmitter` instance.
+		 * @param {(String|Symbol)} evt The Event name.
+		 * @private
+		 */
+		function clearEvent(emitter, evt) {
+		  if (--emitter._eventsCount === 0) emitter._events = new Events();
+		  else delete emitter._events[evt];
+		}
+
+		/**
+		 * Minimal `EventEmitter` interface that is molded against the Node.js
+		 * `EventEmitter` interface.
+		 *
+		 * @constructor
+		 * @public
+		 */
+		function EventEmitter() {
+		  this._events = new Events();
+		  this._eventsCount = 0;
+		}
+
+		/**
+		 * Return an array listing the events for which the emitter has registered
+		 * listeners.
+		 *
+		 * @returns {Array}
+		 * @public
+		 */
+		EventEmitter.prototype.eventNames = function eventNames() {
+		  var names = []
+		    , events
+		    , name;
+
+		  if (this._eventsCount === 0) return names;
+
+		  for (name in (events = this._events)) {
+		    if (has.call(events, name)) names.push(prefix ? name.slice(1) : name);
+		  }
+
+		  if (Object.getOwnPropertySymbols) {
+		    return names.concat(Object.getOwnPropertySymbols(events));
+		  }
+
+		  return names;
+		};
+
+		/**
+		 * Return the listeners registered for a given event.
+		 *
+		 * @param {(String|Symbol)} event The event name.
+		 * @returns {Array} The registered listeners.
+		 * @public
+		 */
+		EventEmitter.prototype.listeners = function listeners(event) {
+		  var evt = prefix ? prefix + event : event
+		    , handlers = this._events[evt];
+
+		  if (!handlers) return [];
+		  if (handlers.fn) return [handlers.fn];
+
+		  for (var i = 0, l = handlers.length, ee = new Array(l); i < l; i++) {
+		    ee[i] = handlers[i].fn;
+		  }
+
+		  return ee;
+		};
+
+		/**
+		 * Return the number of listeners listening to a given event.
+		 *
+		 * @param {(String|Symbol)} event The event name.
+		 * @returns {Number} The number of listeners.
+		 * @public
+		 */
+		EventEmitter.prototype.listenerCount = function listenerCount(event) {
+		  var evt = prefix ? prefix + event : event
+		    , listeners = this._events[evt];
+
+		  if (!listeners) return 0;
+		  if (listeners.fn) return 1;
+		  return listeners.length;
+		};
+
+		/**
+		 * Calls each of the listeners registered for a given event.
+		 *
+		 * @param {(String|Symbol)} event The event name.
+		 * @returns {Boolean} `true` if the event had listeners, else `false`.
+		 * @public
+		 */
+		EventEmitter.prototype.emit = function emit(event, a1, a2, a3, a4, a5) {
+		  var evt = prefix ? prefix + event : event;
+
+		  if (!this._events[evt]) return false;
+
+		  var listeners = this._events[evt]
+		    , len = arguments.length
+		    , args
+		    , i;
+
+		  if (listeners.fn) {
+		    if (listeners.once) this.removeListener(event, listeners.fn, undefined, true);
+
+		    switch (len) {
+		      case 1: return listeners.fn.call(listeners.context), true;
+		      case 2: return listeners.fn.call(listeners.context, a1), true;
+		      case 3: return listeners.fn.call(listeners.context, a1, a2), true;
+		      case 4: return listeners.fn.call(listeners.context, a1, a2, a3), true;
+		      case 5: return listeners.fn.call(listeners.context, a1, a2, a3, a4), true;
+		      case 6: return listeners.fn.call(listeners.context, a1, a2, a3, a4, a5), true;
+		    }
+
+		    for (i = 1, args = new Array(len -1); i < len; i++) {
+		      args[i - 1] = arguments[i];
+		    }
+
+		    listeners.fn.apply(listeners.context, args);
+		  } else {
+		    var length = listeners.length
+		      , j;
+
+		    for (i = 0; i < length; i++) {
+		      if (listeners[i].once) this.removeListener(event, listeners[i].fn, undefined, true);
+
+		      switch (len) {
+		        case 1: listeners[i].fn.call(listeners[i].context); break;
+		        case 2: listeners[i].fn.call(listeners[i].context, a1); break;
+		        case 3: listeners[i].fn.call(listeners[i].context, a1, a2); break;
+		        case 4: listeners[i].fn.call(listeners[i].context, a1, a2, a3); break;
+		        default:
+		          if (!args) for (j = 1, args = new Array(len -1); j < len; j++) {
+		            args[j - 1] = arguments[j];
+		          }
+
+		          listeners[i].fn.apply(listeners[i].context, args);
+		      }
+		    }
+		  }
+
+		  return true;
+		};
+
+		/**
+		 * Add a listener for a given event.
+		 *
+		 * @param {(String|Symbol)} event The event name.
+		 * @param {Function} fn The listener function.
+		 * @param {*} [context=this] The context to invoke the listener with.
+		 * @returns {EventEmitter} `this`.
+		 * @public
+		 */
+		EventEmitter.prototype.on = function on(event, fn, context) {
+		  return addListener(this, event, fn, context, false);
+		};
+
+		/**
+		 * Add a one-time listener for a given event.
+		 *
+		 * @param {(String|Symbol)} event The event name.
+		 * @param {Function} fn The listener function.
+		 * @param {*} [context=this] The context to invoke the listener with.
+		 * @returns {EventEmitter} `this`.
+		 * @public
+		 */
+		EventEmitter.prototype.once = function once(event, fn, context) {
+		  return addListener(this, event, fn, context, true);
+		};
+
+		/**
+		 * Remove the listeners of a given event.
+		 *
+		 * @param {(String|Symbol)} event The event name.
+		 * @param {Function} fn Only remove the listeners that match this function.
+		 * @param {*} context Only remove the listeners that have this context.
+		 * @param {Boolean} once Only remove one-time listeners.
+		 * @returns {EventEmitter} `this`.
+		 * @public
+		 */
+		EventEmitter.prototype.removeListener = function removeListener(event, fn, context, once) {
+		  var evt = prefix ? prefix + event : event;
+
+		  if (!this._events[evt]) return this;
+		  if (!fn) {
+		    clearEvent(this, evt);
+		    return this;
+		  }
+
+		  var listeners = this._events[evt];
+
+		  if (listeners.fn) {
+		    if (
+		      listeners.fn === fn &&
+		      (!once || listeners.once) &&
+		      (!context || listeners.context === context)
+		    ) {
+		      clearEvent(this, evt);
+		    }
+		  } else {
+		    for (var i = 0, events = [], length = listeners.length; i < length; i++) {
+		      if (
+		        listeners[i].fn !== fn ||
+		        (once && !listeners[i].once) ||
+		        (context && listeners[i].context !== context)
+		      ) {
+		        events.push(listeners[i]);
+		      }
+		    }
+
+		    //
+		    // Reset the array, or remove it completely if we have no more listeners.
+		    //
+		    if (events.length) this._events[evt] = events.length === 1 ? events[0] : events;
+		    else clearEvent(this, evt);
+		  }
+
+		  return this;
+		};
+
+		/**
+		 * Remove all listeners, or those of the specified event.
+		 *
+		 * @param {(String|Symbol)} [event] The event name.
+		 * @returns {EventEmitter} `this`.
+		 * @public
+		 */
+		EventEmitter.prototype.removeAllListeners = function removeAllListeners(event) {
+		  var evt;
+
+		  if (event) {
+		    evt = prefix ? prefix + event : event;
+		    if (this._events[evt]) clearEvent(this, evt);
+		  } else {
+		    this._events = new Events();
+		    this._eventsCount = 0;
+		  }
+
+		  return this;
+		};
+
+		//
+		// Alias methods names because people roll like that.
+		//
+		EventEmitter.prototype.off = EventEmitter.prototype.removeListener;
+		EventEmitter.prototype.addListener = EventEmitter.prototype.on;
+
+		//
+		// Expose the prefix.
+		//
+		EventEmitter.prefixed = prefix;
+
+		//
+		// Allow `EventEmitter` to be imported as module namespace.
+		//
+		EventEmitter.EventEmitter = EventEmitter;
+
+		//
+		// Expose the module.
+		//
+		{
+		  module.exports = EventEmitter;
+		} 
+	} (eventemitter3));
+	return eventemitter3.exports;
+}
+
+var eventemitter3Exports = requireEventemitter3();
+var EventEmitter = /*@__PURE__*/getDefaultExportFromCjs(eventemitter3Exports);
+
 var API_URL = 'https://test-api.dubit.live';
 function enhanceError(baseMessage, originalError) {
   var errorMessage = baseMessage;
   if (originalError === null || originalError === void 0 ? void 0 : originalError.message) {
-    errorMessage += " Original error: ".concat(originalError.message);
+    errorMessage += " Original error: ".concat(originalError === null || originalError === void 0 ? void 0 : originalError.message);
   }
   var enhancedError = new Error(errorMessage);
-  if (originalError === null || originalError === void 0 ? void 0 : originalError.stack) {
-    enhancedError.stack = originalError.stack;
-  }
-  // Attempt deep clone for cause; fallback to shallow
+  enhancedError.stack = originalError === null || originalError === void 0 ? void 0 : originalError.stack;
   try {
-    enhancedError.cause = typeof structuredClone === 'function' ? structuredClone(originalError) : originalError;
-  } catch (_a) {
+    if (typeof structuredClone === 'function') {
+      enhancedError.cause = structuredClone(originalError);
+    } else {
+      enhancedError.cause = originalError;
+    }
+  } catch (cloneError) {
     enhancedError.cause = originalError;
   }
   return enhancedError;
@@ -94,7 +463,7 @@ function enhanceError(baseMessage, originalError) {
 function formatUserMessage(template, params) {
   if (!params) return template;
   return template.replace(/\{(\w+)\}/g, function (_, key) {
-    return Object.hasOwn(params, key) ? String(params[key]) : "{".concat(key, "}");
+    return params.hasOwnProperty(key) ? String(params[key]) : "{".concat(key, "}");
   });
 }
 function logUserEvent(loggerCallback, eventDef, className, internalData, originalError, messageParams) {
@@ -113,90 +482,111 @@ function logUserEvent(loggerCallback, eventDef, className, internalData, origina
       loggerCallback(logEntry);
     } catch (callbackError) {
       if (loggerCallback !== console.error) {
-        console.error('Error in loggerCallback:', callbackError);
-        console.error('Original log entry:', logEntry);
+        console.error('Error occurred within the provided loggerCallback:', callbackError);
+        console.error('Original Dubit log event:', logEntry);
       }
     }
-    return;
+  } else {
+    var logArgs = ["[".concat(logEntry.timestamp, "] [").concat(logEntry.className, "] ").concat(logEntry.level.toUpperCase(), " (").concat(logEntry.eventCode, "): ").concat(logEntry.userMessage)];
+    if (logEntry.internalData && Object.keys(logEntry.internalData).length > 0) {
+      logArgs.push('Data:', logEntry.internalData);
+    }
+    if (logEntry.error) {
+      logArgs.push('Error:', logEntry.error);
+    }
+    switch (logEntry.level) {
+      case 'error':
+        console.error.apply(console, logArgs);
+        break;
+      case 'warn':
+        console.warn.apply(console, logArgs);
+        break;
+      case 'info':
+        console.info.apply(console, logArgs);
+        break;
+      case 'debug':
+        console.debug.apply(console, logArgs);
+        break;
+      default:
+        console.log.apply(console, logArgs);
+    }
   }
-  // Fallback to console: build args and select method
-  var logArgs = ["[".concat(logEntry.timestamp, "] [").concat(logEntry.className, "] ").concat(logEntry.level.toUpperCase(), " (").concat(logEntry.eventCode, "): ").concat(logEntry.userMessage)];
-  if (internalData && Object.keys(internalData).length > 0) {
-    logArgs.push('Data:', internalData);
-  }
-  if (originalError) {
-    logArgs.push('Error:', originalError);
-  }
-  var consoleMethods = {
-    error: console.error,
-    warn: console.warn,
-    info: console.info,
-    debug: console.debug
-  };
-  var logMethod = consoleMethods[logEntry.level] || console.log;
-  logMethod.apply(void 0, logArgs);
 }
-function containsWordsInSequence(text, searchWords) {
-  var words = searchWords.split(' ').filter(Boolean);
-  var found = words.reduce(function (currentIndex, word) {
-    if (currentIndex === -1) return -1;
-    var index = text.indexOf(word, currentIndex);
-    return index === -1 ? -1 : index + word.length;
+// util functions 
+function checkWord(a, b) {
+  var bList = b.split(' ').filter(Boolean);
+  var found = bList.reduce(function (i, w) {
+    if (i == -1) return -1;
+    var index = a.indexOf(w, i);
+    return index == -1 ? -1 : index + w.length;
   }, 0);
-  return found !== -1;
+  return found != -1;
 }
-var singletonInstance = null;
-function clearSingletonInstance() {
-  singletonInstance = null;
-}
-function hasExistingInstance() {
-  return singletonInstance !== null;
+var DubitEventEmitter = /** @class */function (_super) {
+  __extends(DubitEventEmitter, _super);
+  function DubitEventEmitter() {
+    return _super !== null && _super.apply(this, arguments) || this;
+  }
+  return DubitEventEmitter;
+}(EventEmitter);
+function listenEvents(url) {
+  return __awaiter(this, void 0, void 0, function () {
+    var emitter, callObj;
+    return __generator(this, function (_a) {
+      switch (_a.label) {
+        case 0:
+          emitter = new DubitEventEmitter();
+          callObj = Daily.createCallObject({
+            allowMultipleCallInstances: true,
+            videoSource: false,
+            subscribeToTracksAutomatically: false
+          });
+          callObj.startRemoteParticipantsAudioLevelObserver(100);
+          callObj.on('app-message', function (ev) {
+            return emitter.emit('app-message', ev);
+          });
+          callObj.on('participant-joined', function (ev) {
+            return emitter.emit('participant-joined', ev);
+          });
+          callObj.on('participant-left', function (ev) {
+            return emitter.emit('participant-left', ev);
+          });
+          callObj.on('remote-participants-audio-level', function (ev) {
+            return emitter.emit('remote-participants-audio-level', ev);
+          });
+          return [4 /*yield*/, callObj.join({
+            url: url,
+            audioSource: false,
+            videoSource: false,
+            subscribeToTracksAutomatically: true
+          })];
+        case 1:
+          _a.sent();
+          return [2 /*return*/, {
+            dubitEmitter: emitter,
+            leaveCall: function () {
+              callObj.leave();
+            }
+          }];
+      }
+    });
+  });
 }
 function createNewInstance(_a) {
   return __awaiter(this, arguments, void 0, function (_b) {
-    var existingRoomId, response, data, unixNow, instanceId, response, errorData, errorMessage, error, data, roomId, response, errorData, errorMessage, error, data, error, instance, error_1, completeError, baseMessageFromError;
+    var response, errorData, errorMessage, error, data, instanceId, roomUrl, instance, error_1, completeError, baseMessageFromError;
     var token = _b.token,
       _c = _b.apiUrl,
       apiUrl = _c === void 0 ? API_URL : _c,
-      _d = _b.roomUrl,
-      roomUrl = _d === void 0 ? null : _d,
-      _e = _b.enableEventListener,
-      enableEventListener = _e === void 0 ? false : _e,
-      _f = _b.loggerCallback,
-      loggerCallback = _f === void 0 ? null : _f;
-    return __generator(this, function (_g) {
-      switch (_g.label) {
+      _d = _b.loggerCallback,
+      loggerCallback = _d === void 0 ? null : _d;
+    return __generator(this, function (_e) {
+      switch (_e.label) {
         case 0:
           logUserEvent(loggerCallback, DubitLogEvents.INSTANCE_CREATING, 'DubitSDK');
-          if (roomUrl) {
-            roomUrl = "https://trydubit.daily.co/".concat(roomUrl.trim().split('/').pop());
-          }
-          if (!singletonInstance) return [3 /*break*/, 4];
-          existingRoomId = singletonInstance.getRoomId();
-          if (!(roomUrl && existingRoomId !== roomUrl)) return [3 /*break*/, 1];
-          singletonInstance = null;
-          return [3 /*break*/, 4];
+          _e.label = 1;
         case 1:
-          return [4 /*yield*/, fetch("".concat(apiUrl, "/meeting/room/").concat(existingRoomId, "/details"))];
-        case 2:
-          response = _g.sent();
-          return [4 /*yield*/, response.json()];
-        case 3:
-          data = _g.sent();
-          unixNow = Math.floor(Date.now() / 1000);
-          if (response.ok && (data['exp'] == null || data['exp'] > unixNow)) {
-            logUserEvent(loggerCallback, DubitLogEvents.INSTANCE_CREATED, 'DubitSDK', {
-              message: 'Returning existing singleton instance'
-            });
-            return [2 /*return*/, singletonInstance];
-          } else {
-            singletonInstance = null;
-          }
-          _g.label = 4;
-        case 4:
-          _g.trys.push([4, 23,, 24]);
-          instanceId = '';
-          if (!!roomUrl) return [3 /*break*/, 12];
+          _e.trys.push([1, 9,, 10]);
           return [4 /*yield*/, fetch("".concat(apiUrl, "/meeting/new-meeting"), {
             method: 'GET',
             headers: {
@@ -204,24 +594,24 @@ function createNewInstance(_a) {
               Authorization: "Bearer ".concat(token)
             }
           })];
-        case 5:
-          response = _g.sent();
+        case 2:
+          response = _e.sent();
           errorData = null;
-          if (!!response.ok) return [3 /*break*/, 10];
-          _g.label = 6;
-        case 6:
-          _g.trys.push([6, 8,, 9]);
+          if (!!response.ok) return [3 /*break*/, 7];
+          _e.label = 3;
+        case 3:
+          _e.trys.push([3, 5,, 6]);
           return [4 /*yield*/, response.json()];
-        case 7:
-          errorData = _g.sent();
-          return [3 /*break*/, 9];
-        case 8:
-          _g.sent();
+        case 4:
+          errorData = _e.sent();
+          return [3 /*break*/, 6];
+        case 5:
+          _e.sent();
           errorData = {
             message: "Received non-JSON error response (HTTP ".concat(response.status, ")")
           };
-          return [3 /*break*/, 9];
-        case 9:
+          return [3 /*break*/, 6];
+        case 6:
           errorMessage = (errorData === null || errorData === void 0 ? void 0 : errorData.message) || "Failed to create connection with Dubit servers (HTTP ".concat(response.status, ")");
           error = new Error(errorMessage);
           logUserEvent(loggerCallback, DubitLogEvents.INSTANCE_CREATE_FAILED, 'DubitSDK', {
@@ -229,84 +619,27 @@ function createNewInstance(_a) {
             responseData: errorData
           }, error);
           throw error;
-        case 10:
+        case 7:
           return [4 /*yield*/, response.json()];
-        case 11:
-          data = _g.sent();
+        case 8:
+          data = _e.sent();
           instanceId = data.meeting_id;
           roomUrl = data.roomUrl;
-          return [3 /*break*/, 20];
-        case 12:
-          roomId = roomUrl.split('/').pop();
-          return [4 /*yield*/, fetch("".concat(apiUrl, "/meeting/room/").concat(roomId), {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: "Bearer ".concat(token)
-            }
-          })];
-        case 13:
-          response = _g.sent();
-          errorData = null;
-          if (!!response.ok) return [3 /*break*/, 18];
-          _g.label = 14;
-        case 14:
-          _g.trys.push([14, 16,, 17]);
-          return [4 /*yield*/, response.json()];
-        case 15:
-          errorData = _g.sent();
-          return [3 /*break*/, 17];
-        case 16:
-          _g.sent();
-          errorData = {
-            message: "Received non-JSON error response (HTTP ".concat(response.status, ")")
-          };
-          return [3 /*break*/, 17];
-        case 17:
-          errorMessage = (errorData === null || errorData === void 0 ? void 0 : errorData.message) || "Failed to create connection with Dubit servers (HTTP ".concat(response.status, ")");
-          error = new Error(errorMessage);
-          logUserEvent(loggerCallback, DubitLogEvents.INSTANCE_ROOM_FETCH_FAILED, 'DubitSDK', {
-            status: response.status,
-            responseData: errorData
-          }, error);
-          throw error;
-        case 18:
-          return [4 /*yield*/, response.json()];
-        case 19:
-          data = _g.sent();
-          if (data.is_expired) {
-            error = new Error("Room is expired, please create a new one");
-            logUserEvent(loggerCallback, DubitLogEvents.INSTANCE_ROOM_EXPIRED, 'DubitSDK', {
-              status: response.status,
-              responseData: data
-            }, error);
-            throw error;
-          }
-          instanceId = data.meeting_id;
-          _g.label = 20;
-        case 20:
           instance = new DubitInstance(instanceId, roomUrl, token, apiUrl);
-          if (!enableEventListener) return [3 /*break*/, 22];
-          return [4 /*yield*/, instance._setupEventListener()];
-        case 21:
-          _g.sent();
-          _g.label = 22;
-        case 22:
           instance.setLoggerCallback(loggerCallback);
-          singletonInstance = instance;
           instance._log(DubitLogEvents.INSTANCE_CREATED, {
             instanceId: instanceId
           });
           return [2 /*return*/, instance];
-        case 23:
-          error_1 = _g.sent();
+        case 9:
+          error_1 = _e.sent();
           completeError = enhanceError('Unable to create Dubit instance', error_1);
           baseMessageFromError = completeError.message.split('. Original error:')[0];
           if (error_1.message !== baseMessageFromError) {
             logUserEvent(loggerCallback, DubitLogEvents.INTERNAL_ERROR, 'DubitSDK', undefined, completeError);
           }
           throw completeError;
-        case 24:
+        case 10:
           return [2 /*return*/];
       }
     });
@@ -418,7 +751,6 @@ function validateTranslatorParams(params) {
 var DubitInstance = /** @class */function () {
   function DubitInstance(instanceId, roomUrl, token, apiUrl) {
     this.activeTranslators = new Map();
-    this.eventListenerCallObject = null;
     this.loggerCallback = null;
     this.instanceId = instanceId;
     this.roomUrl = roomUrl;
@@ -426,14 +758,20 @@ var DubitInstance = /** @class */function () {
     this.apiUrl = apiUrl;
   }
   DubitInstance.prototype.setLoggerCallback = function (callback) {
-    if (typeof callback !== 'function' && callback !== null) {
+    if (typeof callback === 'function' || callback === null) {
+      var hadCallback = !!this.loggerCallback;
+      this.loggerCallback = callback;
+      if (!!callback !== hadCallback || !hadCallback) {
+        this._log(DubitLogEvents.LOGGER_CALLBACK_SET, {
+          hasCallback: !!callback
+        });
+      }
+    } else {
       logUserEvent(this.loggerCallback, DubitLogEvents.LOGGER_CALLBACK_INVALID, this.constructor.name, {
         providedType: typeof callback
       });
       this.loggerCallback = null;
-      return;
     }
-    this.loggerCallback = callback;
   };
   DubitInstance.prototype._log = function (eventDef, internalData, originalError, messageParams) {
     logUserEvent(this.loggerCallback, eventDef, this.constructor.name, internalData, originalError, messageParams);
@@ -495,143 +833,6 @@ var DubitInstance = /** @class */function () {
     var parts = this.roomUrl.split('/');
     return parts[parts.length - 1] || '';
   };
-  DubitInstance.prototype.on = function (event, callback) {
-    var _this = this;
-    if (typeof callback !== 'function') {
-      var error = new TypeError('Callback must be a function');
-      this._log(DubitLogEvents.INTERNAL_ERROR, {
-        event: event,
-        stage: 'on',
-        errorType: 'invalid_callback'
-      }, error);
-      throw error;
-    }
-    if (!this.eventListenerCallObject) {
-      var error = new Error('Event listener not initialized');
-      this._log(DubitLogEvents.INTERNAL_ERROR, {
-        event: event,
-        stage: 'on',
-        errorType: 'event_listener_not_initialized',
-        errorMessage: error.message
-      });
-      throw error;
-    }
-    this.eventListenerCallObject.on(event, callback);
-    return function () {
-      try {
-        _this.eventListenerCallObject.off(event, callback);
-        _this._log(DubitLogEvents.INTERNAL_INFO, {
-          event: event,
-          stage: 'off'
-        });
-      } catch (cleanupError) {
-        _this._log(DubitLogEvents.INTERNAL_ERROR, {
-          event: event,
-          stage: 'off'
-        }, cleanupError);
-      }
-    };
-  };
-  DubitInstance.prototype._setupEventListener = function () {
-    return __awaiter(this, void 0, void 0, function () {
-      var callObject, error_5;
-      return __generator(this, function (_a) {
-        switch (_a.label) {
-          case 0:
-            if (this.eventListenerCallObject) {
-              this._log(DubitLogEvents.INTERNAL_INFO, {
-                stage: '_setupEventListener',
-                reason: 'already_initialized'
-              });
-              return [2 /*return*/];
-            }
-            _a.label = 1;
-          case 1:
-            _a.trys.push([1, 4,, 5]);
-            callObject = Daily.createCallObject({
-              allowMultipleCallInstances: true,
-              videoSource: false,
-              subscribeToTracksAutomatically: true
-            });
-            callObject.on('track-started', function (event) {
-              if (event.participant && !event.participant.local && event.track.kind === 'audio') {
-                var audioElement = document.createElement('audio');
-                audioElement.srcObject = new MediaStream([event.track]);
-                audioElement.autoplay = true;
-                audioElement.volume = 0;
-                document.body.appendChild(audioElement);
-              }
-            });
-            return [4 /*yield*/, callObject.join({
-              url: this.roomUrl,
-              audioSource: false,
-              userName: 'Dubit Event Listener'
-            })];
-          case 2:
-            _a.sent();
-            return [4 /*yield*/, callObject.startRemoteParticipantsAudioLevelObserver(200)];
-          case 3:
-            _a.sent();
-            this.eventListenerCallObject = callObject;
-            this._log(DubitLogEvents.INTERNAL_INFO, {
-              stage: '_setupEventListener',
-              status: 'success'
-            });
-            return [3 /*break*/, 5];
-          case 4:
-            error_5 = _a.sent();
-            this._log(DubitLogEvents.INTERNAL_ERROR, {
-              stage: '_setupEventListener',
-              errorType: 'setup_failed'
-            }, error_5);
-            throw error_5;
-          case 5:
-            return [2 /*return*/];
-        }
-      });
-    });
-  };
-  DubitInstance.prototype.destroyEventListener = function () {
-    return __awaiter(this, void 0, void 0, function () {
-      var error_6;
-      return __generator(this, function (_a) {
-        switch (_a.label) {
-          case 0:
-            if (!this.eventListenerCallObject) {
-              this._log(DubitLogEvents.INTERNAL_INFO, {
-                stage: 'destroyEventListener',
-                reason: 'not_initialized'
-              });
-              return [2 /*return*/];
-            }
-            _a.label = 1;
-          case 1:
-            _a.trys.push([1, 4,, 5]);
-            return [4 /*yield*/, this.eventListenerCallObject.leave()];
-          case 2:
-            _a.sent();
-            return [4 /*yield*/, this.eventListenerCallObject.destroy()];
-          case 3:
-            _a.sent();
-            this.eventListenerCallObject = null;
-            this._log(DubitLogEvents.INTERNAL_INFO, {
-              stage: 'destroyEventListener',
-              status: 'success'
-            });
-            return [3 /*break*/, 5];
-          case 4:
-            error_6 = _a.sent();
-            this._log(DubitLogEvents.INTERNAL_ERROR, {
-              stage: 'destroyEventListener',
-              errorType: 'destroy_failed'
-            }, error_6);
-            throw error_6;
-          case 5:
-            return [2 /*return*/];
-        }
-      });
-    });
-  };
   return DubitInstance;
 }();
 var Translator = /** @class */function () {
@@ -659,7 +860,7 @@ var Translator = /** @class */function () {
     this.handleTrackStarted = function (event) {
       var _a;
       // TODO: add better identifier like some kind of id in metadata or user_participant_id in translator name
-      var isValidTranslatorTrack = event.track && event.track.kind === 'audio' && !((_a = event === null || event === void 0 ? void 0 : event.participant) === null || _a === void 0 ? void 0 : _a.local) && containsWordsInSequence(event.participant.user_name, _this._getTranslatorLabel());
+      var isValidTranslatorTrack = event.track && event.track.kind === 'audio' && !((_a = event === null || event === void 0 ? void 0 : event.participant) === null || _a === void 0 ? void 0 : _a.local) && checkWord(event.participant.user_name, _this._getTranslatorLabel());
       if (isValidTranslatorTrack) {
         _this._log(DubitLogEvents.TRANSLATOR_TRACK_READY, {
           participantName: event.participant.user_name,
@@ -694,7 +895,7 @@ var Translator = /** @class */function () {
     this.handleParticipantJoined = function (event) {
       var _a, _b;
       if ((_a = event === null || event === void 0 ? void 0 : event.participant) === null || _a === void 0 ? void 0 : _a.local) return;
-      if (containsWordsInSequence(event.participant.user_name, _this._getTranslatorLabel())) {
+      if (checkWord(event.participant.user_name, _this._getTranslatorLabel())) {
         _this.translatorParticipantId = event.participant.session_id;
         _this._log(DubitLogEvents.TRANSLATOR_PARTICIPANT_JOINED, {
           participantId: _this.translatorParticipantId,
@@ -725,7 +926,7 @@ var Translator = /** @class */function () {
       }
     };
     this.handleParticipantLeft = function (event) {
-      if (!event.participant.local && containsWordsInSequence(event.participant.user_name, _this._getTranslatorLabel())) {
+      if (!event.participant.local && checkWord(event.participant.user_name, _this._getTranslatorLabel())) {
         _this._log(DubitLogEvents.TRANSLATOR_PARTICIPANT_LEFT, {
           participantId: event.participant.session_id,
           participantName: event.participant.user_name
@@ -776,7 +977,7 @@ var Translator = /** @class */function () {
   };
   Translator.prototype.init = function () {
     return __awaiter(this, void 0, void 0, function () {
-      var enhancedError, audioSource, userName, error_7, enhancedError, participants, error_8, messageParams, error_9;
+      var enhancedError, audioSource, userName, error_5, enhancedError, participants, error_6, messageParams, error_7;
       var _a, _b, _c, _d, _e;
       return __generator(this, function (_f) {
         switch (_f.label) {
@@ -838,8 +1039,8 @@ var Translator = /** @class */function () {
             }
             return [3 /*break*/, 5];
           case 3:
-            error_7 = _f.sent();
-            enhancedError = enhanceError('Failed to establish connection', error_7);
+            error_5 = _f.sent();
+            enhancedError = enhanceError('Failed to establish connection', error_5);
             this._log(DubitLogEvents.TRANSLATOR_JOIN_FAILED, {
               roomUrl: this.roomUrl
             }, enhancedError);
@@ -863,7 +1064,7 @@ var Translator = /** @class */function () {
             _f.sent();
             return [3 /*break*/, 11];
           case 8:
-            error_8 = _f.sent();
+            error_6 = _f.sent();
             return [4 /*yield*/, (_b = this.callObject) === null || _b === void 0 ? void 0 : _b.leave()];
           case 9:
             _f.sent();
@@ -871,7 +1072,7 @@ var Translator = /** @class */function () {
           case 10:
             _f.sent();
             this.callObject = null;
-            throw error_8;
+            throw error_6;
           case 11:
             _f.trys.push([11, 13,, 16]);
             messageParams = {
@@ -886,7 +1087,7 @@ var Translator = /** @class */function () {
             _f.sent();
             return [3 /*break*/, 16];
           case 13:
-            error_9 = _f.sent();
+            error_7 = _f.sent();
             return [4 /*yield*/, (_d = this.callObject) === null || _d === void 0 ? void 0 : _d.leave()];
           case 14:
             _f.sent();
@@ -894,7 +1095,7 @@ var Translator = /** @class */function () {
           case 15:
             _f.sent();
             this.callObject = null;
-            throw error_9;
+            throw error_7;
           case 16:
             this._log(DubitLogEvents.TRANSLATOR_INIT_COMPLETE, {
               fromLang: this.fromLang,
@@ -908,7 +1109,7 @@ var Translator = /** @class */function () {
   };
   Translator.prototype.registerParticipant = function (participantId, participantName) {
     return __awaiter(this, void 0, void 0, function () {
-      var response, errorData, errorMessage, error, enhancedError, error_10, enhancedError;
+      var response, errorData, errorMessage, error, enhancedError, error_8, enhancedError;
       return __generator(this, function (_b) {
         switch (_b.label) {
           case 0:
@@ -921,8 +1122,7 @@ var Translator = /** @class */function () {
               },
               body: JSON.stringify({
                 id: participantId,
-                participant_name: participantName,
-                room_id: this.roomUrl.split('/').pop() || ''
+                participant_name: participantName
               })
             })];
           case 1:
@@ -952,9 +1152,9 @@ var Translator = /** @class */function () {
           case 6:
             return [3 /*break*/, 8];
           case 7:
-            error_10 = _b.sent();
-            enhancedError = enhanceError('Error during participant registration', error_10);
-            if (error_10.eventCode !== DubitLogEvents.TRANSLATOR_REGISTER_FAILED.code) {
+            error_8 = _b.sent();
+            enhancedError = enhanceError('Error during participant registration', error_8);
+            if (error_8.eventCode !== DubitLogEvents.TRANSLATOR_REGISTER_FAILED.code) {
               this._log(DubitLogEvents.TRANSLATOR_REGISTER_FAILED, {
                 participantId: participantId
               }, enhancedError);
@@ -969,7 +1169,7 @@ var Translator = /** @class */function () {
   // Adds a translation bot for the given participant
   Translator.prototype.addTranslationBot = function (roomUrl, participantId, fromLanguage, toLanguage, voiceType, version, keywords, translationBeep, hqVoices) {
     return __awaiter(this, void 0, void 0, function () {
-      var apiPayload, messageParams, response, errorData, errorMessage, error, enhancedError, error_11, enhancedError;
+      var apiPayload, messageParams, response, errorData, errorMessage, error, enhancedError, error_9, enhancedError;
       return __generator(this, function (_b) {
         switch (_b.label) {
           case 0:
@@ -1029,9 +1229,9 @@ var Translator = /** @class */function () {
           case 7:
             return [3 /*break*/, 9];
           case 8:
-            error_11 = _b.sent();
-            enhancedError = enhanceError('Error requesting translation service', error_11);
-            if (error_11.eventCode !== DubitLogEvents.TRANSLATOR_REQUEST_FAILED.code) {
+            error_9 = _b.sent();
+            enhancedError = enhanceError('Error requesting translation service', error_9);
+            if (error_9.eventCode !== DubitLogEvents.TRANSLATOR_REQUEST_FAILED.code) {
               this._log(DubitLogEvents.TRANSLATOR_REQUEST_FAILED, {
                 payload: apiPayload
               }, enhancedError, messageParams);
@@ -1296,7 +1496,7 @@ var activeRoutings = new Map();
  */
 function routeTrackToDevice(tracks, volumes, outputDeviceId, elementId) {
   if (tracks.length !== volumes.length) {
-    throw new Error('`tracks` and `volumes` arrays must be the same length');
+    throw new Error("`tracks` and `volumes` arrays must be the same length");
   }
   if (!elementId) {
     elementId = "audio-".concat(tracks.map(function (t) {
@@ -1622,18 +1822,6 @@ var DubitLogEvents = {
     userMessage: 'Failed to connect to Dubit service. Please check connection or token.',
     description: 'Error occurred during the API call to create a new meeting instance.'
   },
-  INSTANCE_ROOM_FETCH_FAILED: {
-    code: 'INSTANCE_ROOM_FETCH_FAILED',
-    level: 'error',
-    userMessage: 'Failed to fetch room details.',
-    description: 'Error occurred during the API call to fetch room details.'
-  },
-  INSTANCE_ROOM_EXPIRED: {
-    code: 'INSTANCE_ROOM_EXPIRED',
-    level: 'error',
-    userMessage: 'Room is expired, please create a new one.',
-    description: 'The room is expired, please create a new one.'
-  },
   LOGGER_CALLBACK_SET: {
     code: 'LOGGER_CALLBACK_SET',
     level: 'debug',
@@ -1780,30 +1968,18 @@ var DubitLogEvents = {
     level: 'error',
     userMessage: 'An internal error occurred.',
     description: 'An unexpected error occurred within the SDK.'
-  },
-  INTERNAL_WARN: {
-    code: 'INTERNAL_WARN',
-    level: 'warn',
-    userMessage: 'An internal warning occurred.',
-    description: 'A warning condition was detected within the SDK.'
-  },
-  INTERNAL_INFO: {
-    code: 'INTERNAL_INFO',
-    level: 'info',
-    userMessage: 'Internal information.',
-    description: 'Informational message from within the SDK.'
   }
 };
 
+exports.DubitEventEmitter = DubitEventEmitter;
 exports.DubitInstance = DubitInstance;
 exports.DubitLogEvents = DubitLogEvents;
 exports.SUPPORTED_LANGUAGES = SUPPORTED_LANGUAGES;
 exports.SUPPORTED_TRANSLATOR_VERSIONS = SUPPORTED_TRANSLATOR_VERSIONS;
 exports.Translator = Translator;
-exports.clearSingletonInstance = clearSingletonInstance;
 exports.createNewInstance = createNewInstance;
 exports.getCompleteTranscript = getCompleteTranscript;
 exports.getSupportedLanguages = getSupportedLanguages;
-exports.hasExistingInstance = hasExistingInstance;
+exports.listenEvents = listenEvents;
 exports.routeTrackToDevice = routeTrackToDevice;
 exports.validateApiKey = validateApiKey;

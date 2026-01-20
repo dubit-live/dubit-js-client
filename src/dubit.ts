@@ -9,20 +9,8 @@ import Daily, {
   DailyParticipantsObject,
 } from '@daily-co/daily-js'
 
-const API_URL = 'https://test-api.dubit.live'
+import EventEmitter from 'eventemitter3';
 
-export type DubitEvent =
-  | 'app-message'
-  | 'participant-joined'
-  | 'participant-left'
-  | 'remote-participants-audio-level'
-
-interface DubitEventTypes {
-  'app-message': (e: DailyEventObjectAppMessage) => void
-  'participant-joined': (e: DailyEventObjectParticipant) => void
-  'participant-left': (e: DailyEventObjectParticipantLeft) => void
-  'remote-participants-audio-level': (e: DailyEventObjectRemoteParticipantsAudioLevel) => void
-}
 
 export type CaptionEvent = {
   participant_id: string
@@ -40,8 +28,6 @@ export type CaptionEvent = {
 export type DubitCreateParams = {
   token: string
   apiUrl?: string
-  roomUrl?: string
-  enableEventListener?: boolean
   loggerCallback?: ((log: DubitUserLog) => void) | null
 }
 
@@ -58,7 +44,7 @@ export type TranslatorParams = {
   inputAudioTrack: MediaStreamTrack | null
   metadata?: Record<string, any>
   outputDeviceId?: string
-  enable_recording: boolean
+  enable_recording: boolean,
   onTranslatedTrackReady?: (track: MediaStreamTrack) => void
   onCaptions?: (caption: CaptionEvent) => void
   onNetworkQualityChange?: (stats: NetworkStats) => void
@@ -68,6 +54,8 @@ export type LanguageType = {
   langCode: string
   label: string
 }
+
+const API_URL = 'https://test-api.dubit.live'
 
 interface DubitLogEventDef {
   readonly code: string
@@ -86,34 +74,30 @@ export interface DubitUserLog {
   error?: Error
 }
 
-function enhanceError(baseMessage: string, originalError?: any): Error {
+function enhanceError(baseMessage: string, originalError: any): Error {
   let errorMessage = baseMessage
   if (originalError?.message) {
-    errorMessage += ` Original error: ${originalError.message}`
+    errorMessage += ` Original error: ${originalError?.message}`
   }
-
   const enhancedError = new Error(errorMessage)
-  if (originalError?.stack) {
-    enhancedError.stack = originalError.stack
-  }
-
-  // Attempt deep clone for cause; fallback to shallow
+  enhancedError.stack = originalError?.stack
   try {
-    enhancedError.cause =
-      typeof structuredClone === 'function' ? structuredClone(originalError) : originalError
-  } catch {
+    if (typeof structuredClone === 'function') {
+      enhancedError.cause = structuredClone(originalError)
+    } else {
+      enhancedError.cause = originalError
+    }
+  } catch (cloneError) {
     enhancedError.cause = originalError
   }
-
   return enhancedError
 }
 
 function formatUserMessage(template: string, params?: Record<string, any>): string {
   if (!params) return template
-
-  return template.replace(/\{(\w+)\}/g, (_, key: string) => {
-    return Object.hasOwn(params, key) ? String(params[key]) : `{${key}}`
-  })
+  return template.replace(/\{(\w+)\}/g, (_, key) =>
+    params.hasOwnProperty(key) ? String(params[key]) : `{${key}}`,
+  )
 }
 
 function logUserEvent(
@@ -123,16 +107,16 @@ function logUserEvent(
   internalData?: any,
   originalError?: Error,
   messageParams?: Record<string, any>,
-): void {
+) {
   const userMessage = formatUserMessage(eventDef.userMessage, messageParams)
 
   const logEntry: DubitUserLog = {
     eventCode: eventDef.code,
     level: eventDef.level,
-    userMessage,
+    userMessage: userMessage,
     className,
     timestamp: new Date().toISOString(),
-    internalData,
+    internalData: internalData,
     error: originalError,
   }
 
@@ -141,203 +125,158 @@ function logUserEvent(
       loggerCallback(logEntry)
     } catch (callbackError: any) {
       if (loggerCallback !== console.error) {
-        console.error('Error in loggerCallback:', callbackError)
-        console.error('Original log entry:', logEntry)
+        console.error('Error occurred within the provided loggerCallback:', callbackError)
+        console.error('Original Dubit log event:', logEntry)
       }
     }
-    return
+  } else {
+    const logArgs: any[] = [
+      `[${logEntry.timestamp}] [${logEntry.className}] ${logEntry.level.toUpperCase()} (${logEntry.eventCode}): ${logEntry.userMessage}`,
+    ]
+    if (logEntry.internalData && Object.keys(logEntry.internalData).length > 0) {
+      logArgs.push('Data:', logEntry.internalData)
+    }
+    if (logEntry.error) {
+      logArgs.push('Error:', logEntry.error)
+    }
+
+    switch (logEntry.level) {
+      case 'error':
+        console.error(...logArgs)
+        break
+      case 'warn':
+        console.warn(...logArgs)
+        break
+      case 'info':
+        console.info(...logArgs)
+        break
+      case 'debug':
+        console.debug(...logArgs)
+        break
+      default:
+        console.log(...logArgs)
+    }
   }
-
-  // Fallback to console: build args and select method
-  const logArgs: any[] = [
-    `[${logEntry.timestamp}] [${logEntry.className}] ${logEntry.level.toUpperCase()} (${logEntry.eventCode}): ${logEntry.userMessage}`,
-  ]
-
-  if (internalData && Object.keys(internalData).length > 0) {
-    logArgs.push('Data:', internalData)
-  }
-
-  if (originalError) {
-    logArgs.push('Error:', originalError)
-  }
-
-  const consoleMethods: Record<DubitUserLog['level'], typeof console.log> = {
-    error: console.error,
-    warn: console.warn,
-    info: console.info,
-    debug: console.debug,
-  }
-
-  const logMethod = consoleMethods[logEntry.level] || console.log
-  logMethod(...logArgs)
 }
 
-function containsWordsInSequence(text: string, searchWords: string): boolean {
-  const words = searchWords.split(' ').filter(Boolean)
 
-  const found = words.reduce((currentIndex, word) => {
-    if (currentIndex === -1) return -1
-    const index = text.indexOf(word, currentIndex)
-    return index === -1 ? -1 : index + word.length
-  }, 0)
 
-  return found !== -1
+// util functions 
+
+function checkWord(a: string, b: string): boolean {
+
+  const bList = b.split(' ').filter(Boolean);
+
+  const found = bList.reduce((i, w) => {
+    if (i == -1) return -1;
+    const index = a.indexOf(w, i);
+    return index == -1 ? -1 : index + w.length;
+  }, 0);
+
+  return found != -1;
+
 }
 
-let singletonInstance: DubitInstance | null = null
 
-export function clearSingletonInstance(): void {
-  singletonInstance = null
+interface DubitEventTypes {
+  'app-message': (e: DailyEventObjectAppMessage) => void;
+  'participant-joined': (e: DailyEventObjectParticipant) => void;
+  'participant-left': (e: DailyEventObjectParticipantLeft) => void;
+  'remote-participants-audio-level': (e: DailyEventObjectRemoteParticipantsAudioLevel) => void;
 }
 
-export function hasExistingInstance(): boolean {
-  return singletonInstance !== null
+
+export class DubitEventEmitter extends EventEmitter<DubitEventTypes> { }
+
+export async function listenEvents(url: string): Promise<{
+  dubitEmitter: DubitEventEmitter,
+  leaveCall: () => void
+}> {
+  const emitter = new DubitEventEmitter();
+
+  const callObj = Daily.createCallObject({
+    allowMultipleCallInstances: true,
+    videoSource: false,
+    subscribeToTracksAutomatically: false,
+  });
+
+
+  callObj.startRemoteParticipantsAudioLevelObserver(100);
+
+
+  callObj.on('app-message', (ev) => emitter.emit('app-message', ev));
+  callObj.on('participant-joined', (ev) => emitter.emit('participant-joined', ev));
+  callObj.on('participant-left', (ev) => emitter.emit('participant-left', ev));
+  callObj.on('remote-participants-audio-level', (ev) => emitter.emit('remote-participants-audio-level', ev));
+
+
+  await callObj.join({
+    url,
+    audioSource: false,
+    videoSource: false,
+    subscribeToTracksAutomatically: true,
+  });
+
+  return {
+    dubitEmitter: emitter,
+    leaveCall: () => { callObj.leave() }
+
+  }
 }
+
+
 
 export async function createNewInstance({
   token,
   apiUrl = API_URL,
-  roomUrl = null,
-  enableEventListener = false,
   loggerCallback = null,
 }: DubitCreateParams): Promise<DubitInstance> {
   logUserEvent(loggerCallback, DubitLogEvents.INSTANCE_CREATING, 'DubitSDK')
-  if (roomUrl) {
-    roomUrl = `https://trydubit.daily.co/${roomUrl.trim().split('/').pop()}`
-  }
-
-  if (singletonInstance) {
-    const existingRoomId = singletonInstance.getRoomId()
-
-    if (roomUrl && existingRoomId !== roomUrl) {
-      singletonInstance = null
-    } else {
-      const response = await fetch(`${apiUrl}/meeting/room/${existingRoomId}/details`)
-
-      const data = await response.json()
-      const unixNow = Math.floor(Date.now() / 1000);
-      if (response.ok && (data['exp'] == null || data['exp'] > unixNow)) {
-        logUserEvent(loggerCallback, DubitLogEvents.INSTANCE_CREATED, 'DubitSDK', {
-          message: 'Returning existing singleton instance',
-        })
-        return singletonInstance
-      } else {
-        singletonInstance = null
-      }
-    }
-  }
 
   try {
-    let instanceId = ''
+    const response = await fetch(`${apiUrl}/meeting/new-meeting`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    })
 
-    if (!roomUrl) {
-      const response = await fetch(`${apiUrl}/meeting/new-meeting`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      let errorData: any = null
-      if (!response.ok) {
-        try {
-          errorData = await response.json()
-        } catch (jsonError) {
-          errorData = {
-            message: `Received non-JSON error response (HTTP ${response.status})`,
-          }
+    let errorData: any = null
+    if (!response.ok) {
+      try {
+        errorData = await response.json()
+      } catch (jsonError) {
+        errorData = {
+          message: `Received non-JSON error response (HTTP ${response.status})`,
         }
-        const errorMessage =
-          errorData?.message ||
-          `Failed to create connection with Dubit servers (HTTP ${response.status})`
-        const error = new Error(errorMessage)
-        logUserEvent(
-          loggerCallback,
-          DubitLogEvents.INSTANCE_CREATE_FAILED,
-          'DubitSDK',
-          { status: response.status, responseData: errorData },
-          error,
-        )
-        throw error
       }
-
-      type NewMeetingResponseData = {
-        status: string
-        roomUrl: string
-        roomName: string
-        meeting_id: string
-        owner_token: string
-      }
-      const data: NewMeetingResponseData = await response.json()
-
-      instanceId = data.meeting_id
-      roomUrl = data.roomUrl
-    } else {
-      const roomId = roomUrl.split('/').pop()
-
-      const response = await fetch(`${apiUrl}/meeting/room/${roomId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      let errorData: any = null
-      if (!response.ok) {
-        try {
-          errorData = await response.json()
-        } catch (jsonError) {
-          errorData = {
-            message: `Received non-JSON error response (HTTP ${response.status})`,
-          }
-        }
-        const errorMessage =
-          errorData?.message ||
-          `Failed to create connection with Dubit servers (HTTP ${response.status})`
-        const error = new Error(errorMessage)
-        logUserEvent(
-          loggerCallback,
-          DubitLogEvents.INSTANCE_ROOM_FETCH_FAILED,
-          'DubitSDK',
-          { status: response.status, responseData: errorData },
-          error,
-        )
-        throw error
-      }
-
-      type RoomDetailsResponseData = {
-        status: string
-        is_expired: boolean
-        roomUrl: string
-        roomName: string
-        meeting_id: string
-      }
-      const data: RoomDetailsResponseData = await response.json()
-
-      if (data.is_expired) {
-        const error = new Error(`Room is expired, please create a new one`)
-        logUserEvent(
-          loggerCallback,
-          DubitLogEvents.INSTANCE_ROOM_EXPIRED,
-          'DubitSDK',
-          { status: response.status, responseData: data },
-          error,
-        )
-        throw error
-      }
-
-      instanceId = data.meeting_id
+      const errorMessage =
+        errorData?.message ||
+        `Failed to create connection with Dubit servers (HTTP ${response.status})`
+      const error = new Error(errorMessage)
+      logUserEvent(
+        loggerCallback,
+        DubitLogEvents.INSTANCE_CREATE_FAILED,
+        'DubitSDK',
+        { status: response.status, responseData: errorData },
+        error,
+      )
+      throw error
     }
 
+    type NewMeetingResponseData = {
+      status: string
+      roomUrl: string
+      roomName: string
+      meeting_id: string
+      owner_token: string
+    }
+    const data: NewMeetingResponseData = await response.json()
+    const instanceId = data.meeting_id
+    const roomUrl = data.roomUrl
     const instance = new DubitInstance(instanceId, roomUrl, token, apiUrl)
-    if (enableEventListener) {
-      await instance._setupEventListener()
-    }
     instance.setLoggerCallback(loggerCallback)
-
-    singletonInstance = instance
 
     instance._log(DubitLogEvents.INSTANCE_CREATED, { instanceId })
     return instance
@@ -453,24 +392,25 @@ export class DubitInstance {
   public token: string
   private apiUrl: string
   private activeTranslators: Map<string, Translator> = new Map()
-  private eventListenerCallObject: DailyCall | null = null
-
   private loggerCallback: ((log: DubitUserLog) => void) | null = null
 
-  constructor(
-    instanceId: string,
-    roomUrl: string,
-    token: string,
-    apiUrl: string,
-  ) {
+  constructor(instanceId: string, roomUrl: string, token: string, apiUrl: string) {
     this.instanceId = instanceId
     this.roomUrl = roomUrl
     this.token = token
     this.apiUrl = apiUrl
   }
 
-  public setLoggerCallback(callback: ((log: DubitUserLog) => void) | null): void {
-    if (typeof callback !== 'function' && callback !== null) {
+  public setLoggerCallback(callback: ((log: DubitUserLog) => void) | null) {
+    if (typeof callback === 'function' || callback === null) {
+      const hadCallback = !!this.loggerCallback
+      this.loggerCallback = callback
+      if (!!callback !== hadCallback || !hadCallback) {
+        this._log(DubitLogEvents.LOGGER_CALLBACK_SET, {
+          hasCallback: !!callback,
+        })
+      }
+    } else {
       logUserEvent(
         this.loggerCallback,
         DubitLogEvents.LOGGER_CALLBACK_INVALID,
@@ -478,10 +418,7 @@ export class DubitInstance {
         { providedType: typeof callback },
       )
       this.loggerCallback = null
-      return
     }
-
-    this.loggerCallback = callback
   }
 
   _log(
@@ -542,115 +479,6 @@ export class DubitInstance {
     const parts = this.roomUrl.split('/')
     return parts[parts.length - 1] || ''
   }
-
-  public on<T extends DubitEvent>(
-    event: T,
-    callback: (data: DubitEventTypes[T]) => void,
-  ): () => void {
-    if (typeof callback !== 'function') {
-      const error = new TypeError('Callback must be a function')
-      this._log(
-        DubitLogEvents.INTERNAL_ERROR,
-        { event, stage: 'on', errorType: 'invalid_callback' },
-        error,
-      )
-      throw error
-    }
-
-    if (!this.eventListenerCallObject) {
-      const error = new Error('Event listener not initialized')
-      this._log(DubitLogEvents.INTERNAL_ERROR, {
-        event,
-        stage: 'on',
-        errorType: 'event_listener_not_initialized',
-        errorMessage: error.message,
-      })
-      throw error
-    }
-
-    this.eventListenerCallObject.on(event, callback as any)
-
-    return () => {
-      try {
-        this.eventListenerCallObject.off(event, callback as any)
-        this._log(DubitLogEvents.INTERNAL_INFO, { event, stage: 'off' })
-      } catch (cleanupError) {
-        this._log(DubitLogEvents.INTERNAL_ERROR, { event, stage: 'off' }, cleanupError as Error)
-      }
-    }
-  }
-
-  async _setupEventListener(): Promise<void> {
-    if (this.eventListenerCallObject) {
-      this._log(DubitLogEvents.INTERNAL_INFO, {
-        stage: '_setupEventListener',
-        reason: 'already_initialized',
-      })
-      return
-    }
-
-    try {
-      const callObject = Daily.createCallObject({
-        allowMultipleCallInstances: true,
-        videoSource: false,
-        subscribeToTracksAutomatically: true,
-      });
-  
-
-      callObject.on('track-started', (event) => {
-        if (event.participant && !event.participant.local && event.track.kind === 'audio') {
-          const audioElement = document.createElement('audio');
-          audioElement.srcObject = new MediaStream([event.track]);
-          audioElement.autoplay = true;
-          audioElement.volume = 0;
-          document.body.appendChild(audioElement);
-        }
-      });
-      
-      
-      await callObject.join({
-        url: this.roomUrl,
-        audioSource: false,
-        userName: 'Dubit Event Listener',
-      })
-
-      await callObject.startRemoteParticipantsAudioLevelObserver(200);
-
-      this.eventListenerCallObject = callObject
-      this._log(DubitLogEvents.INTERNAL_INFO, { stage: '_setupEventListener', status: 'success' })
-    } catch (error) {
-      this._log(
-        DubitLogEvents.INTERNAL_ERROR,
-        { stage: '_setupEventListener', errorType: 'setup_failed' },
-        error as Error,
-      )
-      throw error
-    }
-  }
-
-  public async destroyEventListener(): Promise<void> {
-    if (!this.eventListenerCallObject) {
-      this._log(DubitLogEvents.INTERNAL_INFO, {
-        stage: 'destroyEventListener',
-        reason: 'not_initialized',
-      })
-      return
-    }
-
-    try {
-      await this.eventListenerCallObject.leave()
-      await this.eventListenerCallObject.destroy()
-      this.eventListenerCallObject = null
-      this._log(DubitLogEvents.INTERNAL_INFO, { stage: 'destroyEventListener', status: 'success' })
-    } catch (error) {
-      this._log(
-        DubitLogEvents.INTERNAL_ERROR,
-        { stage: 'destroyEventListener', errorType: 'destroy_failed' },
-        error as Error,
-      )
-      throw error
-    }
-  }
 }
 
 export class Translator {
@@ -709,7 +537,7 @@ export class Translator {
     this.inputAudioTrack = params.inputAudioTrack
     this.metadata = params.metadata ? safeSerializeMetadata(params.metadata) : {}
     this.outputDeviceId = params.outputDeviceId
-    this.enable_recording = params.enable_recording || false
+    this.enable_recording = params.enable_recording || false;
     this.loggerCallback = params.loggerCallback || null
     if (params.onTranslatedTrackReady)
       this.onTranslatedTrackCallback = params.onTranslatedTrackReady
@@ -791,14 +619,15 @@ export class Translator {
           },
         },
       })
-
-      if (this.enable_recording) {
+      
+      if(this.enable_recording) {
         this.callObject.startRecording({
           layout: {
             preset: 'raw-tracks-audio-only',
           },
-        })
+        });
       }
+
     } catch (error) {
       const enhancedError = enhanceError('Failed to establish connection', error)
       this._log(DubitLogEvents.TRANSLATOR_JOIN_FAILED, { roomUrl: this.roomUrl }, enhancedError)
@@ -849,6 +678,7 @@ export class Translator {
       throw error
     }
 
+
     this._log(DubitLogEvents.TRANSLATOR_INIT_COMPLETE, {
       fromLang: this.fromLang,
       toLang: this.toLang,
@@ -862,7 +692,7 @@ export class Translator {
       event.track &&
       event.track.kind === 'audio' &&
       !event?.participant?.local &&
-      containsWordsInSequence(event.participant.user_name, this._getTranslatorLabel())
+      checkWord(event.participant.user_name, this._getTranslatorLabel())
 
     if (isValidTranslatorTrack) {
       this._log(
@@ -874,7 +704,7 @@ export class Translator {
         undefined,
         { fromLang: this.fromLang, toLang: this.toLang },
       )
-      this.translatedTrack = event.track
+      this.translatedTrack = event.track;
       if (this.onTranslatedTrackCallback) {
         try {
           this.onTranslatedTrackCallback(event.track)
@@ -886,8 +716,10 @@ export class Translator {
           )
         }
       }
-    } else if (event.track.kind === 'audio' && event.participant.local) {
-      this.userTrack = event.track
+    }
+
+    else if (event.track.kind === 'audio' && event.participant.local) {
+      this.userTrack = event.track;
       if (this.onUserTrackCallback) {
         try {
           this.onUserTrackCallback(event.track)
@@ -905,8 +737,9 @@ export class Translator {
   private handleParticipantJoined = (event: DailyEventObjectParticipant) => {
     if (event?.participant?.local) return
 
-    if (containsWordsInSequence(event.participant.user_name, this._getTranslatorLabel())) {
-      this.translatorParticipantId = event.participant.session_id
+
+    if (checkWord(event.participant.user_name, this._getTranslatorLabel())) {
+      this.translatorParticipantId = event.participant.session_id;
       this._log(DubitLogEvents.TRANSLATOR_PARTICIPANT_JOINED, {
         participantId: this.translatorParticipantId,
         participantName: event.participant.user_name,
@@ -940,7 +773,7 @@ export class Translator {
   private handleParticipantLeft = (event: DailyEventObjectParticipantLeft) => {
     if (
       !event.participant.local &&
-      containsWordsInSequence(event.participant.user_name, this._getTranslatorLabel())
+      checkWord(event.participant.user_name, this._getTranslatorLabel())
     ) {
       this._log(DubitLogEvents.TRANSLATOR_PARTICIPANT_LEFT, {
         participantId: event.participant.session_id,
@@ -956,10 +789,7 @@ export class Translator {
     this.onNetworkQualityChangeCallback?.(event as NetworkStats)
   }
 
-  private async registerParticipant(
-    participantId: string,
-    participantName?: string,
-  ): Promise<void> {
+  private async registerParticipant(participantId: string, participantName?: string): Promise<void> {
     try {
       const response = await fetch(`${this.apiUrl}/participant`, {
         method: 'POST',
@@ -967,11 +797,7 @@ export class Translator {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${this.token}`,
         },
-        body: JSON.stringify({
-          id: participantId,
-          participant_name: participantName,
-          room_id: this.roomUrl.split('/').pop() || '',
-        }),
+        body: JSON.stringify({ id: participantId, participant_name: participantName }),
       })
 
       let errorData: any = null
@@ -1071,6 +897,7 @@ export class Translator {
       throw enhancedError
     }
   }
+
 
   public onUserTrackReady(callback: (track: MediaStreamTrack) => void): void {
     if (typeof callback !== 'function') {
@@ -1211,18 +1038,20 @@ export class Translator {
       return 0
     }
 
-    const remoteParticipantsAudioLevels = this.callObject.getRemoteParticipantsAudioLevel()
+    const remoteParticipantsAudioLevels = this.callObject.getRemoteParticipantsAudioLevel();
     return remoteParticipantsAudioLevels[this.translatorParticipantId] ?? 0
   }
 
   public startRemoteParticipantsAudioLevelObserver() {
+
     if (!this.callObject) {
       const error = new Error('Translator not initialized (callObject is null)')
       this._log(DubitLogEvents.INTERNAL_ERROR, { reason: 'Not initialized' }, error)
       throw error
     }
 
-    this.callObject.startRemoteParticipantsAudioLevelObserver()
+    this.callObject.startRemoteParticipantsAudioLevelObserver();
+
   }
 
   public stopRemoteParticipantsAudioLevelObserver() {
@@ -1231,7 +1060,7 @@ export class Translator {
       this._log(DubitLogEvents.INTERNAL_ERROR, { reason: 'Not initialized' }, error)
       throw error
     }
-    this.callObject.stopRemoteParticipantsAudioLevelObserver()
+    this.callObject.stopRemoteParticipantsAudioLevelObserver();
   }
 
   public async destroy(): Promise<void> {
@@ -1302,16 +1131,17 @@ const activeRoutings = new Map()
  */
 export function routeTrackToDevice(
   tracks: MediaStreamTrack[],
-  volumes: number[],
+  volumes: number[],  
   outputDeviceId: string,
   elementId?: string,
 ): object {
+
   if (tracks.length !== volumes.length) {
-    throw new Error('`tracks` and `volumes` arrays must be the same length')
+    throw new Error("`tracks` and `volumes` arrays must be the same length");
   }
 
   if (!elementId) {
-    elementId = `audio-${tracks.map((t) => t.id).join('-')}`
+    elementId = `audio-${tracks.map((t) => t.id).join('-')}`;
   }
 
   // Clean up any existing routing for this element ID
@@ -1341,38 +1171,39 @@ export function routeTrackToDevice(
       .catch((err) => console.error(`Failed to resume AudioContext: ${err}`))
   }
 
-  const sourceNodes: MediaStreamAudioSourceNode[] = []
-  const gainNodes: GainNode[] = []
-  const pullElements: HTMLAudioElement[] = []
+  const sourceNodes: MediaStreamAudioSourceNode[] = [];
+  const gainNodes: GainNode[] = [];
+  const pullElements: HTMLAudioElement[] = [];
 
+  
   tracks.forEach((track, i) => {
-    const stream = new MediaStream([track])
+    const stream = new MediaStream([track]);
 
-    const source = audioContext.createMediaStreamSource(stream)
-    sourceNodes.push(source)
+    const source = audioContext.createMediaStreamSource(stream);
+    sourceNodes.push(source);
 
     // c) Create & configure GainNode
-    const gainNode = audioContext.createGain()
-    gainNode.gain.value = volumes[i] / 100
-    gainNodes.push(gainNode)
+    const gainNode = audioContext.createGain();
+    gainNode.gain.value = volumes[i] / 100;
+    gainNodes.push(gainNode);
 
     // d) Connect source → gain → destination
-    source.connect(gainNode).connect(audioContext.destination)
+    source.connect(gainNode).connect(audioContext.destination);
 
     // e) Hidden <audio> to pull in WebRTC audio
-    const pullEl = document.createElement('audio')
-    pullEl.id = `pull-${elementId}-${i}`
-    pullEl.srcObject = stream
-    pullEl.style.display = 'none'
-    pullEl.muted = true
-    document.body.appendChild(pullEl)
-    pullElements.push(pullEl)
+    const pullEl = document.createElement('audio');
+    pullEl.id = `pull-${elementId}-${i}`;
+    pullEl.srcObject = stream;
+    pullEl.style.display = 'none';
+    pullEl.muted = true;
+    document.body.appendChild(pullEl);
+    pullElements.push(pullEl);
 
-    pullEl
-      .play()
+    pullEl.play()
       .then(() => console.log(`Pull element started for track ${track.id}`))
-      .catch((err) => console.error(`Failed to start pull element: ${err}`))
-  })
+      .catch((err) => console.error(`Failed to start pull element: ${err}`));
+  });
+
 
   // If the AudioContext API supports setSinkId directly, use it
   if ('setSinkId' in AudioContext.prototype) {
@@ -1382,28 +1213,30 @@ export function routeTrackToDevice(
       .catch((err: DOMException) => console.error(`Failed to set sinkId on AudioContext: ${err}`))
   }
 
+  
   const routingInfo = {
     context: audioContext,
     sourceNodes,
     gainNodes,
     pullElements,
-    stop: function () {
+    stop: function() {
       // disconnect & remove elements
       this.sourceNodes.forEach((src, idx) => {
-        src.disconnect()
-        const el = this.pullElements[idx]
-        el.pause()
-        el.srcObject = null
+        src.disconnect();
+        const el = this.pullElements[idx];
+        el.pause();
+        el.srcObject = null;
         if (el.parentNode) {
-          el.parentNode.removeChild(el)
+          el.parentNode.removeChild(el);
         }
-      })
-      console.log(`Stopped routing ${tracks.length} tracks to device ${outputDeviceId}`)
+      });
+      console.log(`Stopped routing ${tracks.length} tracks to device ${outputDeviceId}`);
     },
-  }
+  };
 
-  activeRoutings.set(elementId, routingInfo)
-  return routingInfo
+  activeRoutings.set(elementId, routingInfo);
+  return routingInfo;
+
 }
 
 function safeSerializeMetadata(metadata: Record<string, any>): Record<string, any> {
@@ -1522,8 +1355,8 @@ export const SUPPORTED_LANGUAGES: LanguageType[] = [
   { label: 'Arabic (Saudi Arabia)', langCode: 'ar-SA' },
   { label: 'Arabic (Syria)', langCode: 'ar-SY' },
   { label: 'Arabic (Tunisia)', langCode: 'ar-TN' },
-  { label: 'Arabic (Yemen)', langCode: 'ar-YE' },
-]
+  { label: 'Arabic (Yemen)', langCode: 'ar-YE' }
+];
 
 export const DubitLogEvents = {
   // Instance Lifecycle
@@ -1544,18 +1377,6 @@ export const DubitLogEvents = {
     level: 'error',
     userMessage: 'Failed to connect to Dubit service. Please check connection or token.',
     description: 'Error occurred during the API call to create a new meeting instance.',
-  },
-  INSTANCE_ROOM_FETCH_FAILED: {
-    code: 'INSTANCE_ROOM_FETCH_FAILED',
-    level: 'error',
-    userMessage: 'Failed to fetch room details.',
-    description: 'Error occurred during the API call to fetch room details.',
-  },
-  INSTANCE_ROOM_EXPIRED: {
-    code: 'INSTANCE_ROOM_EXPIRED',
-    level: 'error',
-    userMessage: 'Room is expired, please create a new one.',
-    description: 'The room is expired, please create a new one.',
   },
   LOGGER_CALLBACK_SET: {
     code: 'LOGGER_CALLBACK_SET',
@@ -1707,17 +1528,5 @@ export const DubitLogEvents = {
     level: 'error',
     userMessage: 'An internal error occurred.',
     description: 'An unexpected error occurred within the SDK.',
-  },
-  INTERNAL_WARN: {
-    code: 'INTERNAL_WARN',
-    level: 'warn',
-    userMessage: 'An internal warning occurred.',
-    description: 'A warning condition was detected within the SDK.',
-  },
-  INTERNAL_INFO: {
-    code: 'INTERNAL_INFO',
-    level: 'info',
-    userMessage: 'Internal information.',
-    description: 'Informational message from within the SDK.',
   },
 } as const

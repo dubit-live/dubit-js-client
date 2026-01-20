@@ -1,11 +1,5 @@
 import { DailyEventObjectAppMessage, DailyEventObjectParticipant, DailyEventObjectParticipantLeft, DailyEventObjectRemoteParticipantsAudioLevel, DailyNetworkStats } from '@daily-co/daily-js';
-export type DubitEvent = 'app-message' | 'participant-joined' | 'participant-left' | 'remote-participants-audio-level';
-interface DubitEventTypes {
-    'app-message': (e: DailyEventObjectAppMessage) => void;
-    'participant-joined': (e: DailyEventObjectParticipant) => void;
-    'participant-left': (e: DailyEventObjectParticipantLeft) => void;
-    'remote-participants-audio-level': (e: DailyEventObjectRemoteParticipantsAudioLevel) => void;
-}
+import EventEmitter from 'eventemitter3';
 export type CaptionEvent = {
     participant_id: string;
     timestamp: string;
@@ -21,8 +15,6 @@ export type CaptionEvent = {
 export type DubitCreateParams = {
     token: string;
     apiUrl?: string;
-    roomUrl?: string;
-    enableEventListener?: boolean;
     loggerCallback?: ((log: DubitUserLog) => void) | null;
 };
 export type NetworkStats = DailyNetworkStats;
@@ -61,9 +53,19 @@ export interface DubitUserLog {
     internalData?: any;
     error?: Error;
 }
-export declare function clearSingletonInstance(): void;
-export declare function hasExistingInstance(): boolean;
-export declare function createNewInstance({ token, apiUrl, roomUrl, enableEventListener, loggerCallback, }: DubitCreateParams): Promise<DubitInstance>;
+interface DubitEventTypes {
+    'app-message': (e: DailyEventObjectAppMessage) => void;
+    'participant-joined': (e: DailyEventObjectParticipant) => void;
+    'participant-left': (e: DailyEventObjectParticipantLeft) => void;
+    'remote-participants-audio-level': (e: DailyEventObjectRemoteParticipantsAudioLevel) => void;
+}
+export declare class DubitEventEmitter extends EventEmitter<DubitEventTypes> {
+}
+export declare function listenEvents(url: string): Promise<{
+    dubitEmitter: DubitEventEmitter;
+    leaveCall: () => void;
+}>;
+export declare function createNewInstance({ token, apiUrl, loggerCallback, }: DubitCreateParams): Promise<DubitInstance>;
 export declare function getSupportedLanguages(): LanguageType[];
 export declare function validateApiKey(apiKey: string): Promise<boolean>;
 export declare function getCompleteTranscript({ instanceId, token, apiUrl, }: {
@@ -77,7 +79,6 @@ export declare class DubitInstance {
     token: string;
     private apiUrl;
     private activeTranslators;
-    private eventListenerCallObject;
     private loggerCallback;
     constructor(instanceId: string, roomUrl: string, token: string, apiUrl: string);
     setLoggerCallback(callback: ((log: DubitUserLog) => void) | null): void;
@@ -85,9 +86,6 @@ export declare class DubitInstance {
     addTranslator(params: TranslatorParams): Promise<Translator>;
     getActiveTranslators(): Map<string, Translator>;
     getRoomId(): string;
-    on<T extends DubitEvent>(event: T, callback: (data: DubitEventTypes[T]) => void): () => void;
-    _setupEventListener(): Promise<void>;
-    destroyEventListener(): Promise<void>;
 }
 export declare class Translator {
     private instanceId;
@@ -198,18 +196,6 @@ export declare const DubitLogEvents: {
         readonly level: "error";
         readonly userMessage: "Failed to connect to Dubit service. Please check connection or token.";
         readonly description: "Error occurred during the API call to create a new meeting instance.";
-    };
-    readonly INSTANCE_ROOM_FETCH_FAILED: {
-        readonly code: "INSTANCE_ROOM_FETCH_FAILED";
-        readonly level: "error";
-        readonly userMessage: "Failed to fetch room details.";
-        readonly description: "Error occurred during the API call to fetch room details.";
-    };
-    readonly INSTANCE_ROOM_EXPIRED: {
-        readonly code: "INSTANCE_ROOM_EXPIRED";
-        readonly level: "error";
-        readonly userMessage: "Room is expired, please create a new one.";
-        readonly description: "The room is expired, please create a new one.";
     };
     readonly LOGGER_CALLBACK_SET: {
         readonly code: "LOGGER_CALLBACK_SET";
@@ -354,18 +340,6 @@ export declare const DubitLogEvents: {
         readonly level: "error";
         readonly userMessage: "An internal error occurred.";
         readonly description: "An unexpected error occurred within the SDK.";
-    };
-    readonly INTERNAL_WARN: {
-        readonly code: "INTERNAL_WARN";
-        readonly level: "warn";
-        readonly userMessage: "An internal warning occurred.";
-        readonly description: "A warning condition was detected within the SDK.";
-    };
-    readonly INTERNAL_INFO: {
-        readonly code: "INTERNAL_INFO";
-        readonly level: "info";
-        readonly userMessage: "Internal information.";
-        readonly description: "Informational message from within the SDK.";
     };
 };
 export {};
