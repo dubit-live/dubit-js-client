@@ -1017,7 +1017,7 @@ var Translator = /** @class */function () {
             errorMessage = (errorData === null || errorData === void 0 ? void 0 : errorData.message) || "Failed API call to request translator service (HTTP ".concat(response.status, ")");
             error = new Error(errorMessage);
             enhancedError = enhanceError('Translator request failed', error) // Enhance here
-            ;
+;
             this._log(DubitLogEvents.TRANSLATOR_REQUEST_FAILED, {
               payload: apiPayload,
               status: response.status,
@@ -1223,7 +1223,7 @@ var Translator = /** @class */function () {
         switch (_a.label) {
           case 0:
             participantId = this.participantId // Capture before nulling
-            ;
+;
             this._log(DubitLogEvents.TRANSLATOR_DESTROYED, {
               stage: 'starting',
               participantId: participantId

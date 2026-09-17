@@ -21,11 +21,11 @@
 Install **dubit-js** via npm:
 
 ```bash
-npm install dubit-js
+bun install dubit-js
 ```
 
 ```
-npm install @daily-co/daily-js
+bun add @daily-co/daily-js
 ```
 
 ## Usage
