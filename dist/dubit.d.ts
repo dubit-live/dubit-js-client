@@ -1,10 +1,10 @@
-import { DailyEventObjectAppMessage, DailyEventObjectParticipant, DailyEventObjectParticipantLeft, DailyEventObjectRemoteParticipantsAudioLevel, DailyNetworkStats } from '@daily-co/daily-js';
-export type DubitEvent = 'app-message' | 'participant-joined' | 'participant-left' | 'remote-participants-audio-level';
+import { DailyEventObjectAppMessage, DailyEventObjectParticipant, DailyEventObjectParticipantLeft, DailyEventObjectRemoteParticipantsAudioLevel, DailyNetworkStats } from "@daily-co/daily-js";
+export type DubitEvent = "app-message" | "participant-joined" | "participant-left" | "remote-participants-audio-level";
 interface DubitEventTypes {
-    'app-message': (e: DailyEventObjectAppMessage) => void;
-    'participant-joined': (e: DailyEventObjectParticipant) => void;
-    'participant-left': (e: DailyEventObjectParticipantLeft) => void;
-    'remote-participants-audio-level': (e: DailyEventObjectRemoteParticipantsAudioLevel) => void;
+    "app-message": (e: DailyEventObjectAppMessage) => void;
+    "participant-joined": (e: DailyEventObjectParticipant) => void;
+    "participant-left": (e: DailyEventObjectParticipantLeft) => void;
+    "remote-participants-audio-level": (e: DailyEventObjectRemoteParticipantsAudioLevel) => void;
 }
 export type CaptionEvent = {
     participant_id: string;
@@ -29,7 +29,7 @@ export type NetworkStats = DailyNetworkStats;
 export type TranslatorParams = {
     fromLang: string;
     toLang: string;
-    voiceType: 'male' | 'female';
+    voiceType: "male" | "female";
     version?: string;
     keywords?: boolean;
     hqVoices?: boolean;
@@ -48,13 +48,13 @@ export type LanguageType = {
 };
 interface DubitLogEventDef {
     readonly code: string;
-    readonly level: 'error' | 'warn' | 'info' | 'debug';
+    readonly level: "error" | "warn" | "info" | "debug";
     readonly userMessage: string;
     readonly description: string;
 }
 export interface DubitUserLog {
     eventCode: string;
-    level: 'error' | 'warn' | 'info' | 'debug';
+    level: "error" | "warn" | "info" | "debug";
     userMessage: string;
     className: string;
     timestamp: string;

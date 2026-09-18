@@ -75,7 +75,7 @@
         return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
     };
 
-    var API_URL = 'https://test-api.dubit.live';
+    var API_URL = "https://test-api.dubit.live";
     function enhanceError(baseMessage, originalError) {
       var errorMessage = baseMessage;
       if (originalError === null || originalError === void 0 ? void 0 : originalError.message) {
@@ -87,7 +87,7 @@
       }
       // Attempt deep clone for cause; fallback to shallow
       try {
-        enhancedError.cause = typeof structuredClone === 'function' ? structuredClone(originalError) : originalError;
+        enhancedError.cause = typeof structuredClone === "function" ? structuredClone(originalError) : originalError;
       } catch (_a) {
         enhancedError.cause = originalError;
       }
@@ -115,8 +115,8 @@
           loggerCallback(logEntry);
         } catch (callbackError) {
           if (loggerCallback !== console.error) {
-            console.error('Error in loggerCallback:', callbackError);
-            console.error('Original log entry:', logEntry);
+            console.error("Error in loggerCallback:", callbackError);
+            console.error("Original log entry:", logEntry);
           }
         }
         return;
@@ -124,10 +124,10 @@
       // Fallback to console: build args and select method
       var logArgs = ["[".concat(logEntry.timestamp, "] [").concat(logEntry.className, "] ").concat(logEntry.level.toUpperCase(), " (").concat(logEntry.eventCode, "): ").concat(logEntry.userMessage)];
       if (internalData && Object.keys(internalData).length > 0) {
-        logArgs.push('Data:', internalData);
+        logArgs.push("Data:", internalData);
       }
       if (originalError) {
-        logArgs.push('Error:', originalError);
+        logArgs.push("Error:", originalError);
       }
       var consoleMethods = {
         error: console.error,
@@ -139,7 +139,7 @@
       logMethod.apply(void 0, logArgs);
     }
     function containsWordsInSequence(text, searchWords) {
-      var words = searchWords.split(' ').filter(Boolean);
+      var words = searchWords.split(" ").filter(Boolean);
       var found = words.reduce(function (currentIndex, word) {
         if (currentIndex === -1) return -1;
         var index = text.indexOf(word, currentIndex);
@@ -169,9 +169,9 @@
         return __generator(this, function (_g) {
           switch (_g.label) {
             case 0:
-              logUserEvent(loggerCallback, DubitLogEvents.INSTANCE_CREATING, 'DubitSDK');
+              logUserEvent(loggerCallback, DubitLogEvents.INSTANCE_CREATING, "DubitSDK");
               if (roomUrl) {
-                roomUrl = "https://trydubit.daily.co/".concat(roomUrl.trim().split('/').pop());
+                roomUrl = "https://trydubit.daily.co/".concat(roomUrl.trim().split("/").pop());
               }
               if (!singletonInstance) return [3 /*break*/, 4];
               existingRoomId = singletonInstance.getRoomId();
@@ -186,9 +186,9 @@
             case 3:
               data = _g.sent();
               unixNow = Math.floor(Date.now() / 1000);
-              if (response.ok && (data['exp'] == null || data['exp'] > unixNow)) {
-                logUserEvent(loggerCallback, DubitLogEvents.INSTANCE_CREATED, 'DubitSDK', {
-                  message: 'Returning existing singleton instance'
+              if (response.ok && (data["exp"] == null || data["exp"] > unixNow)) {
+                logUserEvent(loggerCallback, DubitLogEvents.INSTANCE_CREATED, "DubitSDK", {
+                  message: "Returning existing singleton instance"
                 });
                 return [2 /*return*/, singletonInstance];
               } else {
@@ -197,12 +197,12 @@
               _g.label = 4;
             case 4:
               _g.trys.push([4, 23,, 24]);
-              instanceId = '';
+              instanceId = "";
               if (!!roomUrl) return [3 /*break*/, 12];
               return [4 /*yield*/, fetch("".concat(apiUrl, "/meeting/new-meeting"), {
-                method: 'GET',
+                method: "GET",
                 headers: {
-                  'Content-Type': 'application/json',
+                  "Content-Type": "application/json",
                   Authorization: "Bearer ".concat(token)
                 }
               })];
@@ -226,7 +226,7 @@
             case 9:
               errorMessage = (errorData === null || errorData === void 0 ? void 0 : errorData.message) || "Failed to create connection with Dubit servers (HTTP ".concat(response.status, ")");
               error = new Error(errorMessage);
-              logUserEvent(loggerCallback, DubitLogEvents.INSTANCE_CREATE_FAILED, 'DubitSDK', {
+              logUserEvent(loggerCallback, DubitLogEvents.INSTANCE_CREATE_FAILED, "DubitSDK", {
                 status: response.status,
                 responseData: errorData
               }, error);
@@ -239,11 +239,11 @@
               roomUrl = data.roomUrl;
               return [3 /*break*/, 20];
             case 12:
-              roomId = roomUrl.split('/').pop();
+              roomId = roomUrl.split("/").pop();
               return [4 /*yield*/, fetch("".concat(apiUrl, "/meeting/room/").concat(roomId), {
-                method: 'GET',
+                method: "GET",
                 headers: {
-                  'Content-Type': 'application/json',
+                  "Content-Type": "application/json",
                   Authorization: "Bearer ".concat(token)
                 }
               })];
@@ -267,7 +267,7 @@
             case 17:
               errorMessage = (errorData === null || errorData === void 0 ? void 0 : errorData.message) || "Failed to create connection with Dubit servers (HTTP ".concat(response.status, ")");
               error = new Error(errorMessage);
-              logUserEvent(loggerCallback, DubitLogEvents.INSTANCE_ROOM_FETCH_FAILED, 'DubitSDK', {
+              logUserEvent(loggerCallback, DubitLogEvents.INSTANCE_ROOM_FETCH_FAILED, "DubitSDK", {
                 status: response.status,
                 responseData: errorData
               }, error);
@@ -278,7 +278,7 @@
               data = _g.sent();
               if (data.is_expired) {
                 error = new Error("Room is expired, please create a new one");
-                logUserEvent(loggerCallback, DubitLogEvents.INSTANCE_ROOM_EXPIRED, 'DubitSDK', {
+                logUserEvent(loggerCallback, DubitLogEvents.INSTANCE_ROOM_EXPIRED, "DubitSDK", {
                   status: response.status,
                   responseData: data
                 }, error);
@@ -302,10 +302,10 @@
               return [2 /*return*/, instance];
             case 23:
               error_1 = _g.sent();
-              completeError = enhanceError('Unable to create Dubit instance', error_1);
-              baseMessageFromError = completeError.message.split('. Original error:')[0];
+              completeError = enhanceError("Unable to create Dubit instance", error_1);
+              baseMessageFromError = completeError.message.split(". Original error:")[0];
               if (error_1.message !== baseMessageFromError) {
-                logUserEvent(loggerCallback, DubitLogEvents.INTERNAL_ERROR, 'DubitSDK', undefined, completeError);
+                logUserEvent(loggerCallback, DubitLogEvents.INTERNAL_ERROR, "DubitSDK", undefined, completeError);
               }
               throw completeError;
             case 24:
@@ -326,9 +326,9 @@
             case 0:
               _b.trys.push([0, 3,, 4]);
               return [4 /*yield*/, fetch("".concat(API_URL, "/user/validate/api_key/").concat(apiKey), {
-                method: 'GET',
+                method: "GET",
                 headers: {
-                  'Content-Type': 'application/json'
+                  "Content-Type": "application/json"
                 }
               })];
             case 1:
@@ -342,8 +342,8 @@
               return [2 /*return*/, ((_a = result.data) === null || _a === void 0 ? void 0 : _a.is_exists) || false];
             case 3:
               error_2 = _b.sent();
-              completeError = enhanceError('Unable to validate API key. Please check your network connection and API key', error_2);
-              console.error('dubit.validateApiKey error:', completeError);
+              completeError = enhanceError("Unable to validate API key. Please check your network connection and API key", error_2);
+              console.error("dubit.validateApiKey error:", completeError);
               throw completeError;
             case 4:
               return [2 /*return*/];
@@ -363,9 +363,9 @@
             case 0:
               _d.trys.push([0, 4,, 5]);
               return [4 /*yield*/, fetch("".concat(apiUrl, "/meeting/").concat(instanceId, "/transcripts"), {
-                method: 'GET',
+                method: "GET",
                 headers: {
-                  'Content-Type': 'application/json',
+                  "Content-Type": "application/json",
                   Authorization: "Bearer ".concat(token)
                 }
               })];
@@ -375,13 +375,13 @@
               return [4 /*yield*/, response.json()];
             case 2:
               errorData = _d.sent();
-              errorMessage = (errorData === null || errorData === void 0 ? void 0 : errorData.message) || 'Failed to fetch complete transcript';
+              errorMessage = (errorData === null || errorData === void 0 ? void 0 : errorData.message) || "Failed to fetch complete transcript";
               throw new Error(errorMessage);
             case 3:
               return [2 /*return*/, response.json()];
             case 4:
               error_3 = _d.sent();
-              console.error('dubit.getCompleteTranscript error:', error_3);
+              console.error("dubit.getCompleteTranscript error:", error_3);
               throw error_3;
             case 5:
               return [2 /*return*/];
@@ -404,11 +404,11 @@
           return x.langCode;
         })));
       }
-      if (params.voiceType !== 'male' && params.voiceType !== 'female') {
+      if (params.voiceType !== "male" && params.voiceType !== "female") {
         return new Error("Unsupported voiceType: ".concat(params.voiceType, ". Supported voice types: male, female"));
       }
       if (params.inputAudioTrack === null) {
-        return new Error('inputAudioTrack is required');
+        return new Error("inputAudioTrack is required");
       }
       if (params.version && !SUPPORTED_TRANSLATOR_VERSIONS.map(function (x) {
         return x.version;
@@ -428,7 +428,7 @@
         this.apiUrl = apiUrl;
       }
       DubitInstance.prototype.setLoggerCallback = function (callback) {
-        if (typeof callback !== 'function' && callback !== null) {
+        if (typeof callback !== "function" && callback !== null) {
           logUserEvent(this.loggerCallback, DubitLogEvents.LOGGER_CALLBACK_INVALID, this.constructor.name, {
             providedType: typeof callback
           });
@@ -478,10 +478,10 @@
                 return [2 /*return*/, translator];
               case 3:
                 error_4 = _a.sent();
-                enhancedError = enhanceError('Failed to add and initialize translator', error_4);
+                enhancedError = enhanceError("Failed to add and initialize translator", error_4);
                 this._log(DubitLogEvents.INTERNAL_ERROR, {
                   params: params,
-                  stage: 'addTranslator'
+                  stage: "addTranslator"
                 }, enhancedError);
                 return [2 /*return*/, Promise.reject(enhancedError)];
               case 4:
@@ -494,26 +494,26 @@
         return this.activeTranslators;
       };
       DubitInstance.prototype.getRoomId = function () {
-        var parts = this.roomUrl.split('/');
-        return parts[parts.length - 1] || '';
+        var parts = this.roomUrl.split("/");
+        return parts[parts.length - 1] || "";
       };
       DubitInstance.prototype.on = function (event, callback) {
         var _this = this;
-        if (typeof callback !== 'function') {
-          var error = new TypeError('Callback must be a function');
+        if (typeof callback !== "function") {
+          var error = new TypeError("Callback must be a function");
           this._log(DubitLogEvents.INTERNAL_ERROR, {
             event: event,
-            stage: 'on',
-            errorType: 'invalid_callback'
+            stage: "on",
+            errorType: "invalid_callback"
           }, error);
           throw error;
         }
         if (!this.eventListenerCallObject) {
-          var error = new Error('Event listener not initialized');
+          var error = new Error("Event listener not initialized");
           this._log(DubitLogEvents.INTERNAL_ERROR, {
             event: event,
-            stage: 'on',
-            errorType: 'event_listener_not_initialized',
+            stage: "on",
+            errorType: "event_listener_not_initialized",
             errorMessage: error.message
           });
           throw error;
@@ -524,12 +524,12 @@
             _this.eventListenerCallObject.off(event, callback);
             _this._log(DubitLogEvents.INTERNAL_INFO, {
               event: event,
-              stage: 'off'
+              stage: "off"
             });
           } catch (cleanupError) {
             _this._log(DubitLogEvents.INTERNAL_ERROR, {
               event: event,
-              stage: 'off'
+              stage: "off"
             }, cleanupError);
           }
         };
@@ -542,8 +542,8 @@
               case 0:
                 if (this.eventListenerCallObject) {
                   this._log(DubitLogEvents.INTERNAL_INFO, {
-                    stage: '_setupEventListener',
-                    reason: 'already_initialized'
+                    stage: "_setupEventListener",
+                    reason: "already_initialized"
                   });
                   return [2 /*return*/];
                 }
@@ -555,9 +555,9 @@
                   videoSource: false,
                   subscribeToTracksAutomatically: true
                 });
-                callObject.on('track-started', function (event) {
-                  if (event.participant && !event.participant.local && event.track.kind === 'audio') {
-                    var audioElement = document.createElement('audio');
+                callObject.on("track-started", function (event) {
+                  if (event.participant && !event.participant.local && event.track.kind === "audio") {
+                    var audioElement = document.createElement("audio");
                     audioElement.srcObject = new MediaStream([event.track]);
                     audioElement.autoplay = true;
                     audioElement.volume = 0;
@@ -567,7 +567,7 @@
                 return [4 /*yield*/, callObject.join({
                   url: this.roomUrl,
                   audioSource: false,
-                  userName: 'Dubit Event Listener'
+                  userName: "Dubit Event Listener"
                 })];
               case 2:
                 _a.sent();
@@ -576,15 +576,15 @@
                 _a.sent();
                 this.eventListenerCallObject = callObject;
                 this._log(DubitLogEvents.INTERNAL_INFO, {
-                  stage: '_setupEventListener',
-                  status: 'success'
+                  stage: "_setupEventListener",
+                  status: "success"
                 });
                 return [3 /*break*/, 5];
               case 4:
                 error_5 = _a.sent();
                 this._log(DubitLogEvents.INTERNAL_ERROR, {
-                  stage: '_setupEventListener',
-                  errorType: 'setup_failed'
+                  stage: "_setupEventListener",
+                  errorType: "setup_failed"
                 }, error_5);
                 throw error_5;
               case 5:
@@ -601,8 +601,8 @@
               case 0:
                 if (!this.eventListenerCallObject) {
                   this._log(DubitLogEvents.INTERNAL_INFO, {
-                    stage: 'destroyEventListener',
-                    reason: 'not_initialized'
+                    stage: "destroyEventListener",
+                    reason: "not_initialized"
                   });
                   return [2 /*return*/];
                 }
@@ -617,15 +617,15 @@
                 _a.sent();
                 this.eventListenerCallObject = null;
                 this._log(DubitLogEvents.INTERNAL_INFO, {
-                  stage: 'destroyEventListener',
-                  status: 'success'
+                  stage: "destroyEventListener",
+                  status: "success"
                 });
                 return [3 /*break*/, 5];
               case 4:
                 error_6 = _a.sent();
                 this._log(DubitLogEvents.INTERNAL_ERROR, {
-                  stage: 'destroyEventListener',
-                  errorType: 'destroy_failed'
+                  stage: "destroyEventListener",
+                  errorType: "destroy_failed"
                 }, error_6);
                 throw error_6;
               case 5:
@@ -639,15 +639,15 @@
     var Translator = /** @class */function () {
       function Translator(params) {
         var _this = this;
-        this.version = 'latest';
+        this.version = "latest";
         this.keywords = false;
         this.translationBeep = false;
         this.hqVoices = false;
         this.callObject = null;
         this.userTrack = null;
         this.translatedTrack = null;
-        this.participantId = '';
-        this.translatorParticipantId = '';
+        this.participantId = "";
+        this.translatorParticipantId = "";
         // private participantTracks: Map<string, MediaStreamTrack> = new Map();
         this.outputDeviceId = null;
         this.loggerCallback = null;
@@ -661,7 +661,7 @@
         this.handleTrackStarted = function (event) {
           var _a;
           // TODO: add better identifier like some kind of id in metadata or user_participant_id in translator name
-          var isValidTranslatorTrack = event.track && event.track.kind === 'audio' && !((_a = event === null || event === void 0 ? void 0 : event.participant) === null || _a === void 0 ? void 0 : _a.local) && containsWordsInSequence(event.participant.user_name, _this._getTranslatorLabel());
+          var isValidTranslatorTrack = event.track && event.track.kind === "audio" && !((_a = event === null || event === void 0 ? void 0 : event.participant) === null || _a === void 0 ? void 0 : _a.local) && containsWordsInSequence(event.participant.user_name, _this._getTranslatorLabel());
           if (isValidTranslatorTrack) {
             _this._log(DubitLogEvents.TRANSLATOR_TRACK_READY, {
               participantName: event.participant.user_name,
@@ -676,19 +676,19 @@
                 _this.onTranslatedTrackCallback(event.track);
               } catch (callbackError) {
                 _this._log(DubitLogEvents.INTERNAL_ERROR, {
-                  handler: 'onTranslatedTrackCallback'
-                }, enhanceError('Error in onTranslatedTrackReady callback', callbackError));
+                  handler: "onTranslatedTrackCallback"
+                }, enhanceError("Error in onTranslatedTrackReady callback", callbackError));
               }
             }
-          } else if (event.track.kind === 'audio' && event.participant.local) {
+          } else if (event.track.kind === "audio" && event.participant.local) {
             _this.userTrack = event.track;
             if (_this.onUserTrackCallback) {
               try {
                 _this.onUserTrackCallback(event.track);
               } catch (callbackError) {
                 _this._log(DubitLogEvents.INTERNAL_ERROR, {
-                  handler: 'onUserTrackCallback'
-                }, enhanceError('Error in onUserTrackReady callback', callbackError));
+                  handler: "onUserTrackCallback"
+                }, enhanceError("Error in onUserTrackReady callback", callbackError));
               }
             }
           }
@@ -712,16 +712,16 @@
         this.handleAppMessage = function (event) {
           var _a;
           var data = event.data;
-          if (((_a = data === null || data === void 0 ? void 0 : data.type) === null || _a === void 0 ? void 0 : _a.includes('transcript')) && (data === null || data === void 0 ? void 0 : data.transcript) && _this.onCaptionsCallback) {
-            var validTypes = ['user-transcript', 'translation-transcript', 'user-interim-transcript'];
+          if (((_a = data === null || data === void 0 ? void 0 : data.type) === null || _a === void 0 ? void 0 : _a.includes("transcript")) && (data === null || data === void 0 ? void 0 : data.transcript) && _this.onCaptionsCallback) {
+            var validTypes = ["user-transcript", "translation-transcript", "user-interim-transcript"];
             if (validTypes.includes(data.type) && data.participant_id === _this.participantId) {
               try {
                 _this.onCaptionsCallback(data);
               } catch (callbackError) {
                 _this._log(DubitLogEvents.INTERNAL_ERROR, {
-                  handler: 'onCaptionsCallback',
+                  handler: "onCaptionsCallback",
                   messageData: data
-                }, enhanceError('Error in onCaptions callback', callbackError));
+                }, enhanceError("Error in onCaptions callback", callbackError));
               }
             }
           }
@@ -790,23 +790,23 @@
                     subscribeToTracksAutomatically: false
                   });
                   this._log(DubitLogEvents.TRANSLATOR_INITIALIZING, {
-                    stage: 'callObjectCreated'
+                    stage: "callObjectCreated"
                   });
                 } catch (error) {
-                  enhancedError = enhanceError('Failed to create call object', error);
+                  enhancedError = enhanceError("Failed to create call object", error);
                   this._log(DubitLogEvents.TRANSLATOR_INIT_FAILED_CALL_OBJECT, undefined, enhancedError);
                   throw enhancedError;
                 }
                 audioSource = false;
-                if (this.inputAudioTrack && this.inputAudioTrack.readyState === 'live') {
+                if (this.inputAudioTrack && this.inputAudioTrack.readyState === "live") {
                   audioSource = this.inputAudioTrack;
                 }
-                this.callObject.on('track-started', this.handleTrackStarted);
-                this.callObject.on('participant-joined', this.handleParticipantJoined);
-                this.callObject.on('app-message', this.handleAppMessage);
-                this.callObject.on('participant-left', this.handleParticipantLeft);
-                this.callObject.on('network-quality-change', this.handleNetworkQualityChange);
-                userName = this.metadata['userName'] || 'Dubit User';
+                this.callObject.on("track-started", this.handleTrackStarted);
+                this.callObject.on("participant-joined", this.handleParticipantJoined);
+                this.callObject.on("app-message", this.handleAppMessage);
+                this.callObject.on("participant-left", this.handleParticipantLeft);
+                this.callObject.on("network-quality-change", this.handleNetworkQualityChange);
+                userName = this.metadata["userName"] || "Dubit User";
                 _f.label = 1;
               case 1:
                 _f.trys.push([1, 3,, 5]);
@@ -824,7 +824,7 @@
                   inputSettings: {
                     audio: {
                       processor: {
-                        type: 'noise-cancellation'
+                        type: "noise-cancellation"
                       }
                     }
                   }
@@ -834,19 +834,18 @@
                 if (this.enable_recording) {
                   this.callObject.startRecording({
                     layout: {
-                      preset: 'raw-tracks-audio-only'
+                      preset: "raw-tracks-audio-only"
                     }
                   });
                 }
                 return [3 /*break*/, 5];
               case 3:
                 error_7 = _f.sent();
-                enhancedError = enhanceError('Failed to establish connection', error_7);
+                enhancedError = enhanceError("Failed to establish connection", error_7);
                 this._log(DubitLogEvents.TRANSLATOR_JOIN_FAILED, {
                   roomUrl: this.roomUrl
                 }, enhancedError);
                 return [4 /*yield*/, (_a = this.callObject) === null || _a === void 0 ? void 0 : _a.destroy()];
-              // Clean up partially created call object
               case 4:
                 _f.sent(); // Clean up partially created call object
                 this.callObject = null;
@@ -880,9 +879,7 @@
                   fromLang: this.fromLang,
                   toLang: this.toLang
                 };
-                this._log(DubitLogEvents.TRANSLATOR_REQUESTING, {
-                  /* bot params could go here */
-                }, undefined, messageParams);
+                this._log(DubitLogEvents.TRANSLATOR_REQUESTING, {/* bot params could go here */}, undefined, messageParams);
                 return [4 /*yield*/, this.addTranslationBot(this.roomUrl, this.participantId, this.fromLang, this.toLang, this.voiceType, this.version, this.keywords, this.translationBeep, this.hqVoices)];
               case 12:
                 _f.sent();
@@ -916,15 +913,15 @@
               case 0:
                 _b.trys.push([0, 7,, 8]);
                 return [4 /*yield*/, fetch("".concat(this.apiUrl, "/participant"), {
-                  method: 'POST',
+                  method: "POST",
                   headers: {
-                    'Content-Type': 'application/json',
+                    "Content-Type": "application/json",
                     Authorization: "Bearer ".concat(this.token)
                   },
                   body: JSON.stringify({
                     id: participantId,
                     participant_name: participantName,
-                    room_id: this.roomUrl.split('/').pop() || ''
+                    room_id: this.roomUrl.split("/").pop() || ""
                   })
                 })];
               case 1:
@@ -944,7 +941,7 @@
               case 5:
                 errorMessage = (errorData === null || errorData === void 0 ? void 0 : errorData.message) || "Failed API call to register participant (HTTP ".concat(response.status, ")");
                 error = new Error(errorMessage);
-                enhancedError = enhanceError('Participant registration failed', error);
+                enhancedError = enhanceError("Participant registration failed", error);
                 this._log(DubitLogEvents.TRANSLATOR_REGISTER_FAILED, {
                   participantId: participantId,
                   status: response.status,
@@ -955,7 +952,7 @@
                 return [3 /*break*/, 8];
               case 7:
                 error_10 = _b.sent();
-                enhancedError = enhanceError('Error during participant registration', error_10);
+                enhancedError = enhanceError("Error during participant registration", error_10);
                 if (error_10.eventCode !== DubitLogEvents.TRANSLATOR_REGISTER_FAILED.code) {
                   this._log(DubitLogEvents.TRANSLATOR_REGISTER_FAILED, {
                     participantId: participantId
@@ -980,8 +977,8 @@
                   from_language: fromLanguage,
                   to_language: toLanguage,
                   participant_id: participantId,
-                  bot_type: 'translation',
-                  male: voiceType === 'male',
+                  bot_type: "translation",
+                  male: voiceType === "male",
                   version: version,
                   keywords: keywords,
                   translation_beep: translationBeep,
@@ -996,9 +993,9 @@
               case 1:
                 _b.trys.push([1, 8,, 9]);
                 return [4 /*yield*/, fetch("".concat(this.apiUrl, "/meeting/bot/join"), {
-                  method: 'POST',
+                  method: "POST",
                   headers: {
-                    'Content-Type': 'application/json',
+                    "Content-Type": "application/json",
                     Authorization: "Bearer ".concat(this.token)
                   },
                   body: JSON.stringify(apiPayload)
@@ -1020,8 +1017,7 @@
               case 6:
                 errorMessage = (errorData === null || errorData === void 0 ? void 0 : errorData.message) || "Failed API call to request translator service (HTTP ".concat(response.status, ")");
                 error = new Error(errorMessage);
-                enhancedError = enhanceError('Translator request failed', error) // Enhance here
-    ;
+                enhancedError = enhanceError("Translator request failed", error);
                 this._log(DubitLogEvents.TRANSLATOR_REQUEST_FAILED, {
                   payload: apiPayload,
                   status: response.status,
@@ -1032,7 +1028,7 @@
                 return [3 /*break*/, 9];
               case 8:
                 error_11 = _b.sent();
-                enhancedError = enhanceError('Error requesting translation service', error_11);
+                enhancedError = enhanceError("Error requesting translation service", error_11);
                 if (error_11.eventCode !== DubitLogEvents.TRANSLATOR_REQUEST_FAILED.code) {
                   this._log(DubitLogEvents.TRANSLATOR_REQUEST_FAILED, {
                     payload: apiPayload
@@ -1046,9 +1042,9 @@
         });
       };
       Translator.prototype.onUserTrackReady = function (callback) {
-        if (typeof callback !== 'function') {
+        if (typeof callback !== "function") {
           this._log(DubitLogEvents.INTERNAL_ERROR, {
-            reason: 'Invalid callback provided to onUserTrackReady'
+            reason: "Invalid callback provided to onUserTrackReady"
           });
           return;
         }
@@ -1058,15 +1054,15 @@
             callback(this.userTrack);
           } catch (callbackError) {
             this._log(DubitLogEvents.INTERNAL_ERROR, {
-              handler: 'onUserTrackReadyImmediate'
-            }, enhanceError('Error in onUserTrackReady callback (immediate invoke)', callbackError));
+              handler: "onUserTrackReadyImmediate"
+            }, enhanceError("Error in onUserTrackReady callback (immediate invoke)", callbackError));
           }
         }
       };
       Translator.prototype.onTranslatedTrackReady = function (callback) {
-        if (typeof callback !== 'function') {
+        if (typeof callback !== "function") {
           this._log(DubitLogEvents.INTERNAL_ERROR, {
-            reason: 'Invalid callback provided to onTranslatedTrackReady'
+            reason: "Invalid callback provided to onTranslatedTrackReady"
           });
           return;
         }
@@ -1076,15 +1072,15 @@
             callback(this.translatedTrack);
           } catch (callbackError) {
             this._log(DubitLogEvents.INTERNAL_ERROR, {
-              handler: 'onTranslatedTrackReadyImmediate'
-            }, enhanceError('Error in onTranslatedTrackReady callback (immediate invoke)', callbackError));
+              handler: "onTranslatedTrackReadyImmediate"
+            }, enhanceError("Error in onTranslatedTrackReady callback (immediate invoke)", callbackError));
           }
         }
       };
       Translator.prototype.onCaptions = function (callback) {
-        if (typeof callback !== 'function') {
+        if (typeof callback !== "function") {
           this._log(DubitLogEvents.INTERNAL_ERROR, {
-            reason: 'Invalid callback provided to onCaptions'
+            reason: "Invalid callback provided to onCaptions"
           });
           return;
         }
@@ -1105,14 +1101,14 @@
                   trackState: trackState
                 });
                 if (!this.callObject) {
-                  error = new Error('Translator not initialized (callObject is null)');
+                  error = new Error("Translator not initialized (callObject is null)");
                   this._log(DubitLogEvents.INPUT_TRACK_UPDATE_FAILED, {
-                    reason: 'Not initialized'
+                    reason: "Not initialized"
                   }, error);
                   throw error;
                 }
                 targetTrack = newInputTrack;
-                if (!(targetTrack && targetTrack.readyState === 'ended')) return [3 /*break*/, 4];
+                if (!(targetTrack && targetTrack.readyState === "ended")) return [3 /*break*/, 4];
                 this._log(DubitLogEvents.INPUT_TRACK_ENDED_RECOVERING, {
                   trackId: targetTrack.id
                 });
@@ -1132,18 +1128,18 @@
                 targetTrack = stream.getAudioTracks()[0];
                 this._log(DubitLogEvents.INPUT_TRACK_UPDATED, {
                   trackId: targetTrack.id,
-                  reason: 'Recovered ended track'
+                  reason: "Recovered ended track"
                 });
                 return [3 /*break*/, 4];
               case 3:
                 e_1 = _a.sent();
-                error = enhanceError('Failed to get new audio track via getUserMedia', e_1);
+                error = enhanceError("Failed to get new audio track via getUserMedia", e_1);
                 this._log(DubitLogEvents.INPUT_TRACK_RECOVERY_FAILED, {
                   originalTrackId: trackId
                 }, error);
                 targetTrack = null;
                 this._log(DubitLogEvents.INPUT_TRACK_UPDATE_FAILED, {
-                  reason: 'Recovery failed, setting input to null'
+                  reason: "Recovery failed, setting input to null"
                 });
                 return [3 /*break*/, 4];
               case 4:
@@ -1165,7 +1161,7 @@
                 return [3 /*break*/, 8];
               case 7:
                 e_2 = _a.sent();
-                error = enhanceError('Failed call to setInputDevicesAsync or setLocalAudio', e_2);
+                error = enhanceError("Failed call to setInputDevicesAsync or setLocalAudio", e_2);
                 this._log(DubitLogEvents.INPUT_TRACK_UPDATE_FAILED, {
                   trackId: targetTrack === null || targetTrack === void 0 ? void 0 : targetTrack.id
                 }, error);
@@ -1202,9 +1198,9 @@
       };
       Translator.prototype.startRemoteParticipantsAudioLevelObserver = function () {
         if (!this.callObject) {
-          var error = new Error('Translator not initialized (callObject is null)');
+          var error = new Error("Translator not initialized (callObject is null)");
           this._log(DubitLogEvents.INTERNAL_ERROR, {
-            reason: 'Not initialized'
+            reason: "Not initialized"
           }, error);
           throw error;
         }
@@ -1212,9 +1208,9 @@
       };
       Translator.prototype.stopRemoteParticipantsAudioLevelObserver = function () {
         if (!this.callObject) {
-          var error = new Error('Translator not initialized (callObject is null)');
+          var error = new Error("Translator not initialized (callObject is null)");
           this._log(DubitLogEvents.INTERNAL_ERROR, {
-            reason: 'Not initialized'
+            reason: "Not initialized"
           }, error);
           throw error;
         }
@@ -1226,18 +1222,17 @@
           return __generator(this, function (_a) {
             switch (_a.label) {
               case 0:
-                participantId = this.participantId // Capture before nulling
-    ;
+                participantId = this.participantId;
                 this._log(DubitLogEvents.TRANSLATOR_DESTROYED, {
-                  stage: 'starting',
+                  stage: "starting",
                   participantId: participantId
                 });
                 if (!this.callObject) return [3 /*break*/, 8];
-                this.callObject.off('track-started', this.handleTrackStarted);
-                this.callObject.off('participant-joined', this.handleParticipantJoined);
-                this.callObject.off('app-message', this.handleAppMessage);
-                this.callObject.off('participant-left', this.handleParticipantLeft);
-                this.callObject.off('network-quality-change', this.handleNetworkQualityChange);
+                this.callObject.off("track-started", this.handleTrackStarted);
+                this.callObject.off("participant-joined", this.handleParticipantJoined);
+                this.callObject.off("app-message", this.handleAppMessage);
+                this.callObject.off("participant-left", this.handleParticipantLeft);
+                this.callObject.off("network-quality-change", this.handleNetworkQualityChange);
                 _a.label = 1;
               case 1:
                 _a.trys.push([1, 3,, 4]);
@@ -1248,8 +1243,8 @@
               case 3:
                 leaveError_1 = _a.sent();
                 this._log(DubitLogEvents.INTERNAL_ERROR, {
-                  stage: 'destroyLeaveCall'
-                }, enhanceError('Error leaving call during destroy', leaveError_1));
+                  stage: "destroyLeaveCall"
+                }, enhanceError("Error leaving call during destroy", leaveError_1));
                 return [3 /*break*/, 4];
               case 4:
                 _a.trys.push([4, 6,, 7]);
@@ -1260,8 +1255,8 @@
               case 6:
                 destroyError_1 = _a.sent();
                 this._log(DubitLogEvents.INTERNAL_ERROR, {
-                  stage: 'destroyCallObject'
-                }, enhanceError('Error destroying call object during destroy', destroyError_1));
+                  stage: "destroyCallObject"
+                }, enhanceError("Error destroying call object during destroy", destroyError_1));
                 return [3 /*break*/, 7];
               case 7:
                 this.callObject = null;
@@ -1275,12 +1270,12 @@
                     this.onDestroy();
                   } catch (destroyCbError) {
                     this._log(DubitLogEvents.INTERNAL_ERROR, {
-                      stage: 'onDestroyCallback'
-                    }, enhanceError('Error in onDestroy callback', destroyCbError));
+                      stage: "onDestroyCallback"
+                    }, enhanceError("Error in onDestroy callback", destroyCbError));
                   }
                 }
                 this._log(DubitLogEvents.TRANSLATOR_DESTROYED, {
-                  stage: 'complete',
+                  stage: "complete",
                   participantId: participantId
                 });
                 return [2 /*return*/];
@@ -1298,12 +1293,12 @@
      */
     function routeTrackToDevice(tracks, volumes, outputDeviceId, elementId) {
       if (tracks.length !== volumes.length) {
-        throw new Error('`tracks` and `volumes` arrays must be the same length');
+        throw new Error("`tracks` and `volumes` arrays must be the same length");
       }
       if (!elementId) {
         elementId = "audio-".concat(tracks.map(function (t) {
           return t.id;
-        }).join('-'));
+        }).join("-"));
       }
       // Clean up any existing routing for this element ID
       if (activeRoutings.has(elementId)) {
@@ -1323,7 +1318,7 @@
         console.log("Created new AudioContext for device ".concat(outputDeviceId));
       }
       // Resume AudioContext if suspended (autoplay policy)
-      if (audioContext.state === 'suspended') {
+      if (audioContext.state === "suspended") {
         audioContext.resume().then(function () {
           return console.log("AudioContext resumed for device ".concat(outputDeviceId));
         }).catch(function (err) {
@@ -1344,10 +1339,10 @@
         // d) Connect source → gain → destination
         source.connect(gainNode).connect(audioContext.destination);
         // e) Hidden <audio> to pull in WebRTC audio
-        var pullEl = document.createElement('audio');
+        var pullEl = document.createElement("audio");
         pullEl.id = "pull-".concat(elementId, "-").concat(i);
         pullEl.srcObject = stream;
-        pullEl.style.display = 'none';
+        pullEl.style.display = "none";
         pullEl.muted = true;
         document.body.appendChild(pullEl);
         pullElements.push(pullEl);
@@ -1358,7 +1353,7 @@
         });
       });
       // If the AudioContext API supports setSinkId directly, use it
-      if ('setSinkId' in AudioContext.prototype) {
+      if ("setSinkId" in AudioContext.prototype) {
         audioContext //@ts-ignore
         .setSinkId(outputDeviceId).then(function () {
           return console.log("Set sinkId ".concat(outputDeviceId, " on AudioContext directly"));
@@ -1394,7 +1389,7 @@
         JSON.stringify(metadata);
         return metadata;
       } catch (error) {
-        console.error('Metadata serialization error; falling back to empty object.', error);
+        console.error("Metadata serialization error; falling back to empty object.", error);
         return {};
       }
     }
@@ -1402,398 +1397,485 @@
      * An array of available translator versions.
      */
     var SUPPORTED_TRANSLATOR_VERSIONS = [{
-      label: 'V1 (Flash)',
-      version: '1'
+      label: "V1 (Flash)",
+      version: "1"
     }, {
-      label: 'V2 (Pro)',
-      version: '2'
+      label: "V2 (Pro)",
+      version: "2"
     }, {
       label: "V3' (Noise Reduction)",
-      version: '3'
+      version: "3"
     }];
     var SUPPORTED_LANGUAGES = [{
-      label: 'Multilingual (Spanish + English)',
-      langCode: 'multi'
+      label: "Multilingual (auto-detect)",
+      langCode: "multi"
     }, {
-      label: 'Bulgarian',
-      langCode: 'bg'
+      label: "Afrikaans",
+      langCode: "af"
     }, {
-      label: 'Catalan',
-      langCode: 'ca'
+      label: "Arabic (Algeria)",
+      langCode: "ar-DZ"
     }, {
-      label: 'Chinese (China)',
-      langCode: 'zh-CN'
+      label: "Arabic (Bahrain)",
+      langCode: "ar-BH"
     }, {
-      label: 'Chinese (Taiwan)',
-      langCode: 'zh-TW'
+      label: "Arabic (Chad)",
+      langCode: "ar-TD"
     }, {
-      label: 'Chinese (Hong Kong SAR China)',
-      langCode: 'zh-HK'
+      label: "Arabic (Egypt)",
+      langCode: "ar-EG"
     }, {
-      label: 'Czech',
-      langCode: 'cs'
+      label: "Arabic (Iran)",
+      langCode: "ar-IR"
     }, {
-      label: 'Danish',
-      langCode: 'da'
+      label: "Arabic (Iraq)",
+      langCode: "ar-IQ"
     }, {
-      label: 'Danish (Denmark)',
-      langCode: 'da-DK'
+      label: "Arabic (Jordan)",
+      langCode: "ar-JO"
     }, {
-      label: 'Dutch',
-      langCode: 'nl'
+      label: "Arabic (Kuwait)",
+      langCode: "ar-KW"
     }, {
-      label: 'Dutch (Belgium)',
-      langCode: 'nl-BE'
+      label: "Arabic (Lebanon)",
+      langCode: "ar-LB"
     }, {
-      label: 'English',
-      langCode: 'en'
+      label: "Arabic (Libya)",
+      langCode: "ar-LY"
     }, {
-      label: 'English (United States)',
-      langCode: 'en-US'
+      label: "Arabic (Morocco)",
+      langCode: "ar-MA"
     }, {
-      label: 'English (Australia)',
-      langCode: 'en-AU'
+      label: "Arabic (Oman)",
+      langCode: "ar-OM"
     }, {
-      label: 'English (United Kingdom)',
-      langCode: 'en-GB'
+      label: "Arabic (Palestine)",
+      langCode: "ar-PS"
     }, {
-      label: 'English (New Zealand)',
-      langCode: 'en-NZ'
+      label: "Arabic (Qatar)",
+      langCode: "ar-QA"
     }, {
-      label: 'English (India)',
-      langCode: 'en-IN'
+      label: "Arabic (Saudi Arabia)",
+      langCode: "ar-SA"
     }, {
-      label: 'Estonian',
-      langCode: 'et'
+      label: "Arabic (Sudan)",
+      langCode: "ar-SD"
     }, {
-      label: 'Finnish',
-      langCode: 'fi'
+      label: "Arabic (Syria)",
+      langCode: "ar-SY"
     }, {
-      label: 'French',
-      langCode: 'fr'
+      label: "Arabic (Tunisia)",
+      langCode: "ar-TN"
     }, {
-      label: 'French (Canada)',
-      langCode: 'fr-CA'
+      label: "Arabic (United Arab Emirates)",
+      langCode: "ar-AE"
     }, {
-      label: 'German',
-      langCode: 'de'
+      label: "Arabic (Yemen)",
+      langCode: "ar-YE"
     }, {
-      label: 'German (Switzerland)',
-      langCode: 'de-CH'
+      label: "Armenian",
+      langCode: "hy"
     }, {
-      label: 'Greek',
-      langCode: 'el'
+      label: "Assamese",
+      langCode: "as"
     }, {
-      label: 'Hindi',
-      langCode: 'hi'
+      label: "Belarusian",
+      langCode: "be"
     }, {
-      label: 'Hungarian',
-      langCode: 'hu'
+      label: "Bengali",
+      langCode: "bn"
     }, {
-      label: 'Indonesian',
-      langCode: 'id'
+      label: "Bosnian",
+      langCode: "bs"
     }, {
-      label: 'Italian',
-      langCode: 'it'
+      label: "Bulgarian",
+      langCode: "bg"
     }, {
-      label: 'Japanese',
-      langCode: 'ja'
+      label: "Cantonese (Hong Kong)",
+      langCode: "zh-HK"
     }, {
-      label: 'Korean (South Korea)',
-      langCode: 'ko-KR'
+      label: "Catalan",
+      langCode: "ca"
     }, {
-      label: 'Latvian',
-      langCode: 'lv'
+      label: "Croatian",
+      langCode: "hr"
     }, {
-      label: 'Lithuanian',
-      langCode: 'lt'
+      label: "Czech",
+      langCode: "cs"
     }, {
-      label: 'Malay',
-      langCode: 'ms'
+      label: "Danish",
+      langCode: "da"
     }, {
-      label: 'Norwegian',
-      langCode: 'no'
+      label: "Danish (Denmark)",
+      langCode: "da-DK"
     }, {
-      label: 'Polish',
-      langCode: 'pl'
+      label: "Dutch",
+      langCode: "nl"
     }, {
-      label: 'Portuguese',
-      langCode: 'pt'
+      label: "Dutch (Belgium / Flemish)",
+      langCode: "nl-BE"
     }, {
-      label: 'Portuguese (Brazil)',
-      langCode: 'pt-BR'
+      label: "English",
+      langCode: "en"
     }, {
-      label: 'Portuguese (Portugal)',
-      langCode: 'pt-PT'
+      label: "English (Australia)",
+      langCode: "en-AU"
     }, {
-      label: 'Romanian',
-      langCode: 'ro'
+      label: "English (India)",
+      langCode: "en-IN"
     }, {
-      label: 'Russian',
-      langCode: 'ru'
+      label: "English (New Zealand)",
+      langCode: "en-NZ"
     }, {
-      label: 'Slovak',
-      langCode: 'sk'
+      label: "English (United Kingdom)",
+      langCode: "en-GB"
     }, {
-      label: 'Spanish',
-      langCode: 'es'
+      label: "English (United States)",
+      langCode: "en-US"
     }, {
-      label: 'Spanish (Latin America)',
-      langCode: 'es-419'
+      label: "Estonian",
+      langCode: "et"
     }, {
-      label: 'Swedish (Sweden)',
-      langCode: 'sv-SE'
+      label: "Finnish",
+      langCode: "fi"
     }, {
-      label: 'Thai (Thailand)',
-      langCode: 'th-TH'
+      label: "French",
+      langCode: "fr"
     }, {
-      label: 'Turkish',
-      langCode: 'tr'
+      label: "French (Canada)",
+      langCode: "fr-CA"
     }, {
-      label: 'Ukrainian',
-      langCode: 'uk'
+      label: "Georgian",
+      langCode: "ka"
     }, {
-      label: 'Vietnamese',
-      langCode: 'vi'
+      label: "German",
+      langCode: "de"
     }, {
-      label: 'Arabic (United Arab Emirates)',
-      langCode: 'ar-AE'
+      label: "German (Switzerland)",
+      langCode: "de-CH"
     }, {
-      label: 'Arabic (Bahrain)',
-      langCode: 'ar-BH'
+      label: "Greek",
+      langCode: "el"
     }, {
-      label: 'Arabic (Algeria)',
-      langCode: 'ar-DZ'
+      label: "Gujarati",
+      langCode: "gu"
     }, {
-      label: 'Arabic (Egypt)',
-      langCode: 'ar-EG'
+      label: "Hebrew",
+      langCode: "he"
     }, {
-      label: 'Arabic (Iraq)',
-      langCode: 'ar-IQ'
+      label: "Hindi",
+      langCode: "hi"
     }, {
-      label: 'Arabic (Jordan)',
-      langCode: 'ar-JO'
+      label: "Hungarian",
+      langCode: "hu"
     }, {
-      label: 'Arabic (Kuwait)',
-      langCode: 'ar-KW'
+      label: "Indonesian",
+      langCode: "id"
     }, {
-      label: 'Arabic (Lebanon)',
-      langCode: 'ar-LB'
+      label: "Italian",
+      langCode: "it"
     }, {
-      label: 'Arabic (Libya)',
-      langCode: 'ar-LY'
+      label: "Japanese",
+      langCode: "ja"
     }, {
-      label: 'Arabic (Morocco)',
-      langCode: 'ar-MA'
+      label: "Kannada",
+      langCode: "kn"
     }, {
-      label: 'Arabic (Oman)',
-      langCode: 'ar-OM'
+      label: "Kazakh",
+      langCode: "kk"
     }, {
-      label: 'Arabic (Qatar)',
-      langCode: 'ar-QA'
+      label: "Korean (South Korea)",
+      langCode: "ko-KR"
     }, {
-      label: 'Arabic (Saudi Arabia)',
-      langCode: 'ar-SA'
+      label: "Latvian",
+      langCode: "lv"
     }, {
-      label: 'Arabic (Syria)',
-      langCode: 'ar-SY'
+      label: "Lithuanian",
+      langCode: "lt"
     }, {
-      label: 'Arabic (Tunisia)',
-      langCode: 'ar-TN'
+      label: "Macedonian",
+      langCode: "mk"
     }, {
-      label: 'Arabic (Yemen)',
-      langCode: 'ar-YE'
+      label: "Malay",
+      langCode: "ms"
+    }, {
+      label: "Mandarin Chinese (Mainland China)",
+      langCode: "zh-CN"
+    }, {
+      label: "Mandarin Chinese (Taiwan)",
+      langCode: "zh-TW"
+    }, {
+      label: "Marathi",
+      langCode: "mr"
+    }, {
+      label: "Mongolian",
+      langCode: "mn"
+    }, {
+      label: "Nepali",
+      langCode: "ne"
+    }, {
+      label: "Norwegian",
+      langCode: "no"
+    }, {
+      label: "Pashto",
+      langCode: "ps"
+    }, {
+      label: "Persian",
+      langCode: "fa"
+    }, {
+      label: "Polish",
+      langCode: "pl"
+    }, {
+      label: "Portuguese",
+      langCode: "pt"
+    }, {
+      label: "Portuguese (Brazil)",
+      langCode: "pt-BR"
+    }, {
+      label: "Portuguese (Portugal)",
+      langCode: "pt-PT"
+    }, {
+      label: "Punjabi",
+      langCode: "pa"
+    }, {
+      label: "Romanian",
+      langCode: "ro"
+    }, {
+      label: "Russian",
+      langCode: "ru"
+    }, {
+      label: "Serbian",
+      langCode: "sr"
+    }, {
+      label: "Slovak",
+      langCode: "sk"
+    }, {
+      label: "Slovenian",
+      langCode: "sl"
+    }, {
+      label: "Spanish",
+      langCode: "es"
+    }, {
+      label: "Spanish (Latin America & Caribbean)",
+      langCode: "es-419"
+    }, {
+      label: "Swedish (Sweden)",
+      langCode: "sv-SE"
+    }, {
+      label: "Tagalog / Filipino",
+      langCode: "tl"
+    }, {
+      label: "Tamil",
+      langCode: "ta"
+    }, {
+      label: "Telugu",
+      langCode: "te"
+    }, {
+      label: "Thai (Thailand)",
+      langCode: "th-TH"
+    }, {
+      label: "Turkish",
+      langCode: "tr"
+    }, {
+      label: "Ukrainian",
+      langCode: "uk"
+    }, {
+      label: "Urdu",
+      langCode: "ur"
+    }, {
+      label: "Vietnamese",
+      langCode: "vi"
     }];
     var DubitLogEvents = {
       // Instance Lifecycle
       INSTANCE_CREATING: {
-        code: 'INSTANCE_CREATING',
-        level: 'info',
-        userMessage: 'Connecting to Dubit service...',
-        description: 'Attempting to fetch initial meeting details from the API.'
+        code: "INSTANCE_CREATING",
+        level: "info",
+        userMessage: "Connecting to Dubit service...",
+        description: "Attempting to fetch initial meeting details from the API."
       },
       INSTANCE_CREATED: {
-        code: 'INSTANCE_CREATED',
-        level: 'info',
-        userMessage: 'Dubit service connected.',
-        description: 'Successfully created the DubitInstance after API confirmation.'
+        code: "INSTANCE_CREATED",
+        level: "info",
+        userMessage: "Dubit service connected.",
+        description: "Successfully created the DubitInstance after API confirmation."
       },
       INSTANCE_CREATE_FAILED: {
-        code: 'INSTANCE_CREATE_FAILED',
-        level: 'error',
-        userMessage: 'Failed to connect to Dubit service. Please check connection or token.',
-        description: 'Error occurred during the API call to create a new meeting instance.'
+        code: "INSTANCE_CREATE_FAILED",
+        level: "error",
+        userMessage: "Failed to connect to Dubit service. Please check connection or token.",
+        description: "Error occurred during the API call to create a new meeting instance."
       },
       INSTANCE_ROOM_FETCH_FAILED: {
-        code: 'INSTANCE_ROOM_FETCH_FAILED',
-        level: 'error',
-        userMessage: 'Failed to fetch room details.',
-        description: 'Error occurred during the API call to fetch room details.'
+        code: "INSTANCE_ROOM_FETCH_FAILED",
+        level: "error",
+        userMessage: "Failed to fetch room details.",
+        description: "Error occurred during the API call to fetch room details."
       },
       INSTANCE_ROOM_EXPIRED: {
-        code: 'INSTANCE_ROOM_EXPIRED',
-        level: 'error',
-        userMessage: 'Room is expired, please create a new one.',
-        description: 'The room is expired, please create a new one.'
+        code: "INSTANCE_ROOM_EXPIRED",
+        level: "error",
+        userMessage: "Room is expired, please create a new one.",
+        description: "The room is expired, please create a new one."
       },
       LOGGER_CALLBACK_SET: {
-        code: 'LOGGER_CALLBACK_SET',
-        level: 'debug',
-        userMessage: 'Logger configured.',
-        description: 'The logger callback function has been successfully set or updated.'
+        code: "LOGGER_CALLBACK_SET",
+        level: "debug",
+        userMessage: "Logger configured.",
+        description: "The logger callback function has been successfully set or updated."
       },
       LOGGER_CALLBACK_INVALID: {
-        code: 'LOGGER_CALLBACK_INVALID',
-        level: 'warn',
-        userMessage: 'Invalid logger configuration provided.',
-        description: 'An invalid value was provided for the logger callback.'
+        code: "LOGGER_CALLBACK_INVALID",
+        level: "warn",
+        userMessage: "Invalid logger configuration provided.",
+        description: "An invalid value was provided for the logger callback."
       },
       // Translator Lifecycle
       TRANSLATOR_ADDING: {
-        code: 'TRANSLATOR_ADDING',
-        level: 'info',
-        userMessage: 'Adding translator...',
-        description: 'Starting the process to add a new Translator instance.'
+        code: "TRANSLATOR_ADDING",
+        level: "info",
+        userMessage: "Adding translator...",
+        description: "Starting the process to add a new Translator instance."
       },
       TRANSLATOR_INITIALIZING: {
-        code: 'TRANSLATOR_INITIALIZING',
-        level: 'info',
-        userMessage: 'Initializing translation session...',
-        description: 'Creating the underlying call object and preparing to join the room.'
+        code: "TRANSLATOR_INITIALIZING",
+        level: "info",
+        userMessage: "Initializing translation session...",
+        description: "Creating the underlying call object and preparing to join the room."
       },
       TRANSLATOR_INIT_FAILED_CALL_OBJECT: {
-        code: 'TRANSLATOR_INIT_FAILED_CALL_OBJECT',
-        level: 'error',
-        userMessage: 'Failed to create translation session component.',
-        description: 'Error creating the Daily call object.'
+        code: "TRANSLATOR_INIT_FAILED_CALL_OBJECT",
+        level: "error",
+        userMessage: "Failed to create translation session component.",
+        description: "Error creating the Daily call object."
       },
       TRANSLATOR_JOINING_ROOM: {
-        code: 'TRANSLATOR_JOINING_ROOM',
-        level: 'info',
-        userMessage: 'Connecting to translation room...',
-        description: 'Attempting to join the Daily room.'
+        code: "TRANSLATOR_JOINING_ROOM",
+        level: "info",
+        userMessage: "Connecting to translation room...",
+        description: "Attempting to join the Daily room."
       },
       TRANSLATOR_JOIN_FAILED: {
-        code: 'TRANSLATOR_JOIN_FAILED',
-        level: 'error',
-        userMessage: 'Failed to connect to translation room.',
-        description: 'Error joining the Daily room.'
+        code: "TRANSLATOR_JOIN_FAILED",
+        level: "error",
+        userMessage: "Failed to connect to translation room.",
+        description: "Error joining the Daily room."
       },
       TRANSLATOR_REGISTERING: {
-        code: 'TRANSLATOR_REGISTERING',
-        level: 'debug',
-        userMessage: 'Registering translator participant...',
-        description: 'Calling the API to register the local participant for translation.'
+        code: "TRANSLATOR_REGISTERING",
+        level: "debug",
+        userMessage: "Registering translator participant...",
+        description: "Calling the API to register the local participant for translation."
       },
       TRANSLATOR_REGISTER_FAILED: {
-        code: 'TRANSLATOR_REGISTER_FAILED',
-        level: 'error',
-        userMessage: 'Failed to register translator participant.',
-        description: 'Error during the participant registration API call.'
+        code: "TRANSLATOR_REGISTER_FAILED",
+        level: "error",
+        userMessage: "Failed to register translator participant.",
+        description: "Error during the participant registration API call."
       },
       TRANSLATOR_REQUESTING: {
-        code: 'TRANSLATOR_REQUESTING',
-        level: 'info',
-        userMessage: 'Requesting translator from {fromLang} to {toLang}...',
-        description: 'Calling the API to request the translator service to join the room.'
+        code: "TRANSLATOR_REQUESTING",
+        level: "info",
+        userMessage: "Requesting translator from {fromLang} to {toLang}...",
+        description: "Calling the API to request the translator service to join the room."
       },
       TRANSLATOR_REQUEST_FAILED: {
-        code: 'TRANSLATOR_REQUEST_FAILED',
-        level: 'error',
-        userMessage: 'Failed to request {fromLang} to {toLang} translator.',
-        description: 'Error during the API call to add the translation service.'
+        code: "TRANSLATOR_REQUEST_FAILED",
+        level: "error",
+        userMessage: "Failed to request {fromLang} to {toLang} translator.",
+        description: "Error during the API call to add the translation service."
       },
       TRANSLATOR_PARTICIPANT_JOINED: {
-        code: 'TRANSLATOR_PARTICIPANT_JOINED',
-        level: 'debug',
-        userMessage: 'Translator participant connected.',
-        description: 'The remote translator participant has joined the Daily room.'
+        code: "TRANSLATOR_PARTICIPANT_JOINED",
+        level: "debug",
+        userMessage: "Translator participant connected.",
+        description: "The remote translator participant has joined the Daily room."
       },
       TRANSLATOR_TRACK_READY: {
-        code: 'TRANSLATOR_TRACK_READY',
-        level: 'info',
-        userMessage: 'Translator ready ({fromLang} to {toLang}).',
-        description: 'The translated audio track from the translator service is now available.'
+        code: "TRANSLATOR_TRACK_READY",
+        level: "info",
+        userMessage: "Translator ready ({fromLang} to {toLang}).",
+        description: "The translated audio track from the translator service is now available."
       },
       TRANSLATOR_CAPTIONS_READY: {
-        code: 'TRANSLATOR_CAPTIONS_READY',
-        level: 'debug',
-        userMessage: 'Captions callback configured.',
-        description: 'The caption callback has been set by the user.'
+        code: "TRANSLATOR_CAPTIONS_READY",
+        level: "debug",
+        userMessage: "Captions callback configured.",
+        description: "The caption callback has been set by the user."
       },
       TRANSLATOR_INIT_COMPLETE: {
-        code: 'TRANSLATOR_INIT_COMPLETE',
-        level: 'info',
-        userMessage: 'Translator initialized.',
-        description: 'The core initialization process for the translator completed successfully (service requested, event listeners set).'
+        code: "TRANSLATOR_INIT_COMPLETE",
+        level: "info",
+        userMessage: "Translator initialized.",
+        description: "The core initialization process for the translator completed successfully (service requested, event listeners set)."
       },
       TRANSLATOR_PARTICIPANT_LEFT: {
-        code: 'TRANSLATOR_PARTICIPANT_LEFT',
-        level: 'warn',
-        userMessage: 'Translator participant disconnected.',
-        description: 'The remote translator participant has left the room.'
+        code: "TRANSLATOR_PARTICIPANT_LEFT",
+        level: "warn",
+        userMessage: "Translator participant disconnected.",
+        description: "The remote translator participant has left the room."
       },
       TRANSLATOR_DESTROYED: {
-        code: 'TRANSLATOR_DESTROYED',
-        level: 'info',
-        userMessage: 'Translator stopped.',
-        description: 'The translator instance has been destroyed and left the room.'
+        code: "TRANSLATOR_DESTROYED",
+        level: "info",
+        userMessage: "Translator stopped.",
+        description: "The translator instance has been destroyed and left the room."
       },
       TRANSLATOR_REMOVED: {
-        code: 'TRANSLATOR_REMOVED',
-        level: 'info',
-        userMessage: 'Translator removed from instance.',
-        description: 'Translator instance removed from the DubitInstance active translators map.'
+        code: "TRANSLATOR_REMOVED",
+        level: "info",
+        userMessage: "Translator removed from instance.",
+        description: "Translator instance removed from the DubitInstance active translators map."
       },
       // Translator Actions
       INPUT_TRACK_UPDATING: {
-        code: 'INPUT_TRACK_UPDATING',
-        level: 'debug',
-        userMessage: 'Updating audio input...',
-        description: 'Attempting to update the input audio track for the translator.'
+        code: "INPUT_TRACK_UPDATING",
+        level: "debug",
+        userMessage: "Updating audio input...",
+        description: "Attempting to update the input audio track for the translator."
       },
       INPUT_TRACK_UPDATED: {
-        code: 'INPUT_TRACK_UPDATED',
-        level: 'info',
-        userMessage: 'Audio input updated.',
-        description: 'Successfully updated the input audio track.'
+        code: "INPUT_TRACK_UPDATED",
+        level: "info",
+        userMessage: "Audio input updated.",
+        description: "Successfully updated the input audio track."
       },
       INPUT_TRACK_UPDATE_FAILED: {
-        code: 'INPUT_TRACK_UPDATE_FAILED',
-        level: 'error',
-        userMessage: 'Failed to update audio input.',
-        description: 'An error occurred while updating the input audio track.'
+        code: "INPUT_TRACK_UPDATE_FAILED",
+        level: "error",
+        userMessage: "Failed to update audio input.",
+        description: "An error occurred while updating the input audio track."
       },
       INPUT_TRACK_ENDED_RECOVERING: {
-        code: 'INPUT_TRACK_ENDED_RECOVERING',
-        level: 'warn',
-        userMessage: 'Audio input ended unexpectedly, attempting recovery...',
-        description: 'The provided input track ended; attempting to get a new one via getUserMedia.'
+        code: "INPUT_TRACK_ENDED_RECOVERING",
+        level: "warn",
+        userMessage: "Audio input ended unexpectedly, attempting recovery...",
+        description: "The provided input track ended; attempting to get a new one via getUserMedia."
       },
       INPUT_TRACK_RECOVERY_FAILED: {
-        code: 'INPUT_TRACK_RECOVERY_FAILED',
-        level: 'error',
-        userMessage: 'Failed to recover audio input.',
-        description: 'Failed to get a new audio track via getUserMedia after the previous one ended.'
+        code: "INPUT_TRACK_RECOVERY_FAILED",
+        level: "error",
+        userMessage: "Failed to recover audio input.",
+        description: "Failed to get a new audio track via getUserMedia after the previous one ended."
       },
       // Generic Error (Fallback)
       INTERNAL_ERROR: {
-        code: 'INTERNAL_ERROR',
-        level: 'error',
-        userMessage: 'An internal error occurred.',
-        description: 'An unexpected error occurred within the SDK.'
+        code: "INTERNAL_ERROR",
+        level: "error",
+        userMessage: "An internal error occurred.",
+        description: "An unexpected error occurred within the SDK."
       },
       INTERNAL_WARN: {
-        code: 'INTERNAL_WARN',
-        level: 'warn',
-        userMessage: 'An internal warning occurred.',
-        description: 'A warning condition was detected within the SDK.'
+        code: "INTERNAL_WARN",
+        level: "warn",
+        userMessage: "An internal warning occurred.",
+        description: "A warning condition was detected within the SDK."
       },
       INTERNAL_INFO: {
-        code: 'INTERNAL_INFO',
-        level: 'info',
-        userMessage: 'Internal information.',
-        description: 'Informational message from within the SDK.'
+        code: "INTERNAL_INFO",
+        level: "info",
+        userMessage: "Internal information.",
+        description: "Informational message from within the SDK."
       }
     };
 
